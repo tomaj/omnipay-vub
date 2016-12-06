@@ -1,5 +1,5 @@
 {
-    "name": "tomaj/omnipay-tatra",
+    "name": "tomaj/omnipay-vub",
     "type": "library",
     "description": "VUB eplatby driver for the Omnipay payment processing library",
     "keywords": [
