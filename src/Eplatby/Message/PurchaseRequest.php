@@ -52,10 +52,10 @@ class PurchaseRequest extends AbstractRequest
         $sharedSecret = $this->getParameter('sharedSecret');
 
         if ($this->getTestmode()) {
-        	return 'https://platby.tomaj.sk/payment/vub-eplatba';
+            return 'https://platby.tomaj.sk/payment/eplatby-hmac';
         } else {
-            // return 'https://ib.vub.sk/e-platbyeuro.aspx';
-            return 'https://nib.vub.sk/epay/merchant';
+            // return 'https://nib.vub.sk/epay/merchant'; // vub test server
+            return 'https://ib.vub.sk/e-platbyeuro.aspx';
         }
     }
 
