@@ -16,10 +16,10 @@ $gateway->setSharedSecret('11111111111111111111111111111111111111111111111111111
 $gateway->setTestMode(true);
 
 $response = $gateway->purchase([
-	'amount' => '10.00',
-	'VS' => '123456',
-	'CS' => '0321',
-	'rurl' => 'http://localhost:4444/testserver.php',
+    'amount' => '10.00',
+    'VS' => '123456',
+    'CS' => '0321',
+    'rurl' => 'http://localhost:4444/testserver.php',
 ])->send();
 
 if ($response->isSuccessful()) {
