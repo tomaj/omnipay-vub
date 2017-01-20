@@ -13,7 +13,7 @@ class CompletePurchaseRequest extends AbstractRequest
         $sharedSecret = $this->getParameter('sharedSecret');
 
         $data = "{$_GET['VS']}{$_GET['RES']}";
-    	$sign = new HmacSign();
+        $sign = new HmacSign();
 
         if ($sign->sign($data, $sharedSecret) != $_GET['SIGN']) {
             throw new InvalidRequestException('incorect signature');
