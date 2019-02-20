@@ -1,5 +1,5 @@
 {
-	"name" : "tomaj/omnipay-vub",
+	"name" : "iki-cz/omnipay-vub",
 	"type" : "library",
 	"description" : "VUB eplatby driver for the Omnipay payment processing library",
 	"keywords" : [
@@ -12,7 +12,7 @@
 		"pay",
 		"payment"
 	],
-	"homepage" : "https://github.com/tomaj/omnipay-vub",
+	"homepage" : "https://github.com/iki-cz/omnipay-vub",
 	"license" : "MIT",
 	"authors" : [{
 			"name" : "Tomas Majer",
