@@ -1,36 +1,37 @@
 {
-	"name" : "iki-cz/omnipay-vub",
-	"type" : "library",
-	"description" : "VUB eplatby driver for the Omnipay payment processing library",
-	"keywords" : [
-		"eplatby",
-		"vub",
-		"epay",
-		"gateway",
-		"merchant",
-		"omnipay",
-		"pay",
-		"payment"
-	],
-	"homepage" : "https://github.com/iki-cz/omnipay-vub",
-	"license" : "MIT",
-	"authors" : [{
-			"name" : "Tomas Majer",
-			"email" : "tomasmajer@gmail.com"
-		}
-	],
-	"autoload" : {
-		"psr-4" : {
-			"Omnipay\\" : "src/"
-		}
-	},
-	"require" : {
-		"omnipay/common" : "~3.0"
-	},
-	"require-dev" : {
-		"omnipay/tests" : "~3.0"
-	},
-	"scripts" : {
-		"test" : "phpunit"
-	}
+    "name": "tomaj/omnipay-vub",
+    "type": "library",
+    "description": "VUB eplatby driver for the Omnipay payment processing library",
+    "keywords": [
+        "eplatby",
+        "vub",
+        "epay",
+        "gateway",
+        "merchant",
+        "omnipay",
+        "pay",
+        "payment"
+    ],
+    "homepage": "https://github.com/tomaj/omnipay-vub",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Tomas Majer",
+            "email": "tomasmajer@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": { 
+            "Omnipay\\": "src/"
+        }
+    },
+    "require": {
+        "omnipay/common": "~3.0"
+    },
+    "require-dev": {
+        "omnipay/tests": "~3.0"
+    },
+    "scripts": {
+        "test": "phpunit"
+    }
 }
