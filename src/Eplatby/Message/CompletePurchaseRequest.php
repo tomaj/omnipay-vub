@@ -12,7 +12,11 @@ class CompletePurchaseRequest extends AbstractRequest
     {
         $sharedSecret = $this->getParameter('sharedSecret');
 
-        $data = "{$_GET['VS']}{$_GET['RES']}";
+        $vs = $_GET['VS'];
+        $ss = isset($_GET['SS']) ? $_GET['SS'] : null;
+        $res = $_GET['RES'];
+
+        $data = "{$vs}{$ss}{$res}";
         $sign = new HmacSign();
 
         if ($sign->sign($data, $sharedSecret) != $_GET['SIGN']) {
@@ -20,8 +24,9 @@ class CompletePurchaseRequest extends AbstractRequest
         }
 
         return [
-            'RES' => $_GET['RES'],
-            'VS' => $_GET['VS'],
+            'RES' => $res,
+            'VS' => $vs,
+            'SS' => $ss
         ];
     }
 

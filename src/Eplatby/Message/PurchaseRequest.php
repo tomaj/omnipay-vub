@@ -41,7 +41,8 @@ class PurchaseRequest extends AbstractRequest
     {
         $sharedSecret = $this->getParameter('sharedSecret');
 
-        $input = "{$this->getMid()}{$this->getAmount()}{$this->getVs()}{$this->getCs()}{$this->getSs()}{$this->getRurl()}";
+        $input = "{$this->getMid()}{$this->getAmount()}{$this->getVs()}{$this->getCs()}{$this->getSs()}"
+            . "{$this->getRurl()}";
         $data['SIGN'] = $this->generateSignature($input);
 
         return $this->response = new PurchaseResponse($this, $data);
