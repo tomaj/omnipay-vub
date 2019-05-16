@@ -19,6 +19,7 @@ $response = $gateway->purchase([
     'amount' => '10.00',
     'VS' => '123456',
     'CS' => '0321',
+    'SS' => '1234',
     'rurl' => 'http://localhost:4444/testserver.php',
 ])->send();
 
