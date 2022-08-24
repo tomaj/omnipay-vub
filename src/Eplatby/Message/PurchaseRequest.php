@@ -52,7 +52,8 @@ class PurchaseRequest extends AbstractRequest
         $sharedSecret = $this->getParameter('sharedSecret');
 
         if ($this->getTestmode()) {
-            return 'https://platby.tomaj.sk/payment/eplatby-hmac';
+            $host = $this->getParameter('testHost') ?: 'https://platby.tomaj.sk';
+            return $host . '/payment/eplatby-hmac';
         } else {
             // return 'https://nib.vub.sk/nepay/merchant'; // vub test server
             return 'https://ib.vub.sk/e-platbyeuro.aspx';
@@ -77,6 +78,16 @@ class PurchaseRequest extends AbstractRequest
     public function setSharedSecret($value)
     {
         return $this->setParameter('sharedSecret', $value);
+    }
+
+    public function getTestHost()
+    {
+        return $this->getParameter('testHost');
+    }
+
+    public function setTestHost($value)
+    {
+        return $this->setParameter('testHost', $value);
     }
 
     public function getVs()
