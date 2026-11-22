@@ -34,10 +34,7 @@ final class PurchaseRequestTest extends TestCase
      */
     private function send(array $parameters): PurchaseResponse
     {
-        $response = $this->request($parameters)->send();
-        self::assertInstanceOf(PurchaseResponse::class, $response);
-
-        return $response;
+        return $this->request($parameters)->send();
     }
 
     public function testGetData(): void

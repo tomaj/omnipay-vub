@@ -21,28 +21,12 @@ final class CompletePurchaseRequestTest extends TestCase
     private const string SIGN_FAIL = 'B090D9AFE61306B9C060AEF7340BB1DE6CA1641661625AC3E705C96AE9AB8179';
     private const string SIGN_TOUT = '246F3F79A7F5B235D2A0E8A6020EB65110B78F052C1ADD51843B2E06C4F8E78C';
 
-    /** @var array<mixed> */
-    private array $originalGet;
-
-    #[\Override]
-    protected function setUp(): void
-    {
-        $this->originalGet = $_GET;
-    }
-
-    #[\Override]
-    protected function tearDown(): void
-    {
-        $_GET = $this->originalGet;
-    }
-
     /**
      * @param array<string, mixed> $query
      */
     private function send(array $query, string $secret = self::SECRET): CompletePurchaseResponse
     {
-        $_GET = $query;
-        $request = new CompletePurchaseRequest(self::createStub(ClientInterface::class), new HttpRequest());
+        $request = new CompletePurchaseRequest(self::createStub(ClientInterface::class), new HttpRequest($query));
         $request->initialize(['sharedSecret' => $secret]);
 
         return $request->sendData($request->getData());

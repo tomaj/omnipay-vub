@@ -6,8 +6,9 @@ namespace Omnipay\Eplatby\Message;
 
 use Omnipay\Common\Message\AbstractResponse;
 use Omnipay\Common\Message\RedirectResponseInterface;
+use Omnipay\Eplatby\Exception\LogicException;
 
-class PurchaseResponse extends AbstractResponse implements RedirectResponseInterface
+final class PurchaseResponse extends AbstractResponse implements RedirectResponseInterface
 {
     #[\Override]
     public function isSuccessful(): bool
@@ -26,7 +27,7 @@ class PurchaseResponse extends AbstractResponse implements RedirectResponseInter
     {
         $request = $this->getRequest();
         if (!$request instanceof PurchaseRequest) {
-            throw new \LogicException('PurchaseResponse requires a PurchaseRequest');
+            throw new LogicException('PurchaseResponse requires a PurchaseRequest');
         }
 
         return $request->getEndpoint();

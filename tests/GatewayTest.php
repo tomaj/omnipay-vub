@@ -6,9 +6,6 @@ namespace Omnipay\Eplatby\Tests;
 
 use Omnipay\Common\Http\ClientInterface;
 use Omnipay\Eplatby\Gateway;
-use Omnipay\Eplatby\Message\CompletePurchaseRequest;
-use Omnipay\Eplatby\Message\PurchaseRequest;
-use Omnipay\Eplatby\Message\PurchaseResponse;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request as HttpRequest;
 
@@ -48,12 +45,10 @@ final class GatewayTest extends TestCase
             'CS' => '0321',
             'rurl' => 'http://localhost:4444/testserver.php',
         ]);
-        self::assertInstanceOf(PurchaseRequest::class, $request);
         self::assertSame('11111111', $request->getMid());
         self::assertSame('123456', $request->getVs());
 
         $response = $request->send();
-        self::assertInstanceOf(PurchaseResponse::class, $response);
         self::assertSame('https://custom.example/payment/eplatby-hmac', $response->getRedirectUrl());
         self::assertSame(
             'E227E97C520A502C45B77AEF4ABE5252A3F3065DB96C471C36FAD186FA50E62E',
@@ -66,8 +61,27 @@ final class GatewayTest extends TestCase
         $this->gateway->setSharedSecret('secret');
 
         $request = $this->gateway->completePurchase();
-        self::assertInstanceOf(CompletePurchaseRequest::class, $request);
         self::assertSame('secret', $request->getSharedSecret());
+    }
+
+    public function testCompletePurchaseReadsTheGatewayHttpRequest(): void
+    {
+        $query = ['VS' => '123456', 'RES' => 'OK', 'SIGN' => 'E3883B183BD85936CC417562F97B0D619B692BBCED477E84989E4272A0E21BD4'];
+        $gateway = new Gateway(self::createStub(ClientInterface::class), new HttpRequest($query));
+        $gateway->setSharedSecret('1111111111111111111111111111111111111111111111111111111111111111');
+
+        $response = $gateway->completePurchase()->send();
+
+        self::assertTrue($response->isSuccessful());
+        self::assertSame('123456', $response->getVs());
+    }
+
+    public function testRequestParametersOverrideGatewayParameters(): void
+    {
+        $this->gateway->setSharedSecret('gateway secret');
+
+        self::assertSame('request secret', $this->gateway->completePurchase(['sharedSecret' => 'request secret'])->getSharedSecret());
+        self::assertSame('request secret', $this->gateway->purchase(['sharedSecret' => 'request secret'])->getSharedSecret());
     }
 
     public function testIntegerMidIsReadAsString(): void

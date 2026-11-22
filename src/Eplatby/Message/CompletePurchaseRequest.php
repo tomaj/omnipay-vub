@@ -9,7 +9,7 @@ use Omnipay\Common\Message\AbstractRequest;
 use Omnipay\Eplatby\Sign\HmacSign;
 use Omnipay\Eplatby\StringParameterTrait;
 
-class CompletePurchaseRequest extends AbstractRequest
+final class CompletePurchaseRequest extends AbstractRequest
 {
     use StringParameterTrait;
 
@@ -37,6 +37,12 @@ class CompletePurchaseRequest extends AbstractRequest
     }
 
     #[\Override]
+    public function send(): CompletePurchaseResponse
+    {
+        return $this->sendData($this->getData());
+    }
+
+    #[\Override]
     public function sendData(mixed $data): CompletePurchaseResponse
     {
         return $this->response = new CompletePurchaseResponse($this, $data);
@@ -53,9 +59,12 @@ class CompletePurchaseRequest extends AbstractRequest
         return $this;
     }
 
+    /**
+     * A query parameter of the bank's return request; '' when it is missing or not a string.
+     */
     private function queryString(string $key): string
     {
-        $value = $_GET[$key] ?? '';
+        $value = $this->httpRequest->query->all()[$key] ?? '';
 
         return is_string($value) ? $value : '';
     }

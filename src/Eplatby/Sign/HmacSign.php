@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Omnipay\Eplatby\Sign;
 
-class HmacSign
+final readonly class HmacSign
 {
     public function sign(string $input, string $secret): string
     {

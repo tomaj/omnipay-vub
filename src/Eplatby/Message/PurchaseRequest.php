@@ -9,7 +9,7 @@ use Omnipay\Common\Message\AbstractRequest;
 use Omnipay\Eplatby\Sign\HmacSign;
 use Omnipay\Eplatby\StringParameterTrait;
 
-class PurchaseRequest extends AbstractRequest
+final class PurchaseRequest extends AbstractRequest
 {
     use StringParameterTrait;
 
@@ -38,6 +38,12 @@ class PurchaseRequest extends AbstractRequest
     {
         $sign = new HmacSign();
         return $sign->sign($data, $this->getSharedSecret() ?? '');
+    }
+
+    #[\Override]
+    public function send(): PurchaseResponse
+    {
+        return $this->sendData($this->getData());
     }
 
     #[\Override]
