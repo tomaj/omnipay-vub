@@ -6,6 +6,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Added
 
+* `LICENSE.md` (MIT, as declared in `composer.json`), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `RELEASING.md`, issue and pull request templates; `composer.json` has `support` links and suggests an HTTP client for Omnipay ([#5](https://github.com/tomaj/omnipay-vub/issues/5)).
 * PHPUnit test suite: purchase data and HMAC signature (expected values computed independently with the `openssl` CLI), production/test endpoints, complete purchase with valid, failed and tampered signatures ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).
 * GitHub Actions CI (tests on PHP 8.3 - 8.6, nightly 8.7, lowest dependencies), PHP-CS-Fixer (PER-CS), PHPStan level max with strict rules, `composer audit`, Dependabot ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).
 
@@ -19,6 +20,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Removed
 
+* The Composer dist archive contains only the library (`src/`, `composer.json`, README, LICENSE, CHANGELOG, UPGRADE): tests, CI and tool configs are `export-ignore`d. The ad-hoc scripts `test.php` and `testserver.php` are removed; the documentation has working examples ([#5](https://github.com/tomaj/omnipay-vub/issues/5)).
 * The no-op `PurchaseRequest::initialize()` override (the parent implementation is used) ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).
 * Travis CI configuration, the unused `omnipay/tests` and `squizlabs/php_codesniffer` dev dependencies ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).
 
