@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace Omnipay\Eplatby\Tests;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Runs the examples that the documentation includes, so the snippets keep working.
+ * Each in its own process: they send headers and set the HTTP response code.
  */
+#[RunTestsInSeparateProcesses]
+#[Group('examples')]
 final class ExamplesTest extends TestCase
 {
     /**
@@ -27,7 +32,6 @@ final class ExamplesTest extends TestCase
         } finally {
             $output = (string) ob_get_clean();
             $_GET = $get;
-            http_response_code(200);
         }
 
         return $output;
