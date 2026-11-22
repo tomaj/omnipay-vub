@@ -1,17 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Omnipay\Eplatby;
 
 use Omnipay\Common\AbstractGateway;
+use Omnipay\Common\Message\RequestInterface;
+use Omnipay\Eplatby\Message\CompletePurchaseRequest;
+use Omnipay\Eplatby\Message\PurchaseRequest;
 
 class Gateway extends AbstractGateway
 {
-    public function getName()
+    use StringParameterTrait;
+
+    #[\Override]
+    public function getName(): string
     {
         return 'VUB ePlatby Gateway';
     }
 
-    public function getDefaultParameters()
+    /**
+     * @return array<string, string>
+     */
+    #[\Override]
+    public function getDefaultParameters(): array
     {
         return [
             'mid' => '',
@@ -20,43 +32,52 @@ class Gateway extends AbstractGateway
         ];
     }
 
-    public function getMid()
+    public function getMid(): ?string
     {
-        return $this->getParameter('mid');
+        return $this->getStringParameter('mid');
     }
 
-    public function setMid($value)
+    public function setMid(?string $value): static
     {
-        return $this->setParameter('mid', $value);
+        $this->setParameter('mid', $value);
+        return $this;
     }
 
-    public function getSharedSecret()
+    public function getSharedSecret(): ?string
     {
-        return $this->getParameter('sharedSecret');
+        return $this->getStringParameter('sharedSecret');
     }
 
-    public function setSharedSecret($value)
+    public function setSharedSecret(?string $value): static
     {
-        return $this->setParameter('sharedSecret', $value);
+        $this->setParameter('sharedSecret', $value);
+        return $this;
     }
 
-    public function getTestHost()
+    public function getTestHost(): ?string
     {
-        return $this->getParameter('testHost');
+        return $this->getStringParameter('testHost');
     }
 
-    public function setTestHost($value)
+    public function setTestHost(?string $value): static
     {
-        return $this->setParameter('testHost', $value);
+        $this->setParameter('testHost', $value);
+        return $this;
     }
 
-    public function purchase(array $parameters = array())
+    /**
+     * @param array<string, mixed> $parameters
+     */
+    public function purchase(array $parameters = []): RequestInterface
     {
-        return $this->createRequest(\Omnipay\Eplatby\Message\PurchaseRequest::class, $parameters);
+        return $this->createRequest(PurchaseRequest::class, $parameters);
     }
 
-    public function completePurchase(array $parameters = array())
+    /**
+     * @param array<string, mixed> $parameters
+     */
+    public function completePurchase(array $parameters = []): RequestInterface
     {
-        return $this->createRequest(\Omnipay\Eplatby\Message\CompletePurchaseRequest::class, $parameters);
+        return $this->createRequest(CompletePurchaseRequest::class, $parameters);
     }
 }

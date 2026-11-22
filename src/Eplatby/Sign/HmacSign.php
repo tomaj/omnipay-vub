@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Omnipay\Eplatby\Sign;
 
 class HmacSign
 {
-    public function sign($input, $secret)
+    public function sign(string $input, string $secret): string
     {
         $inputString = pack('A*', $input);
         $sharedSecret = pack('A*', $secret);

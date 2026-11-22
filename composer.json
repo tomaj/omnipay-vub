@@ -21,18 +21,44 @@
         }
     ],
     "autoload": {
-        "psr-4": { 
+        "psr-4": {
             "Omnipay\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Omnipay\\Eplatby\\Tests\\": "tests/"
+        }
+    },
     "require": {
-        "omnipay/common": "~3.0"
+        "php": "^8.3",
+        "ext-hash": "*",
+        "omnipay/common": "^3.2"
     },
     "require-dev": {
-        "omnipay/tests": "~3.0",
-        "squizlabs/php_codesniffer": "^1.5"
+        "friendsofphp/php-cs-fixer": "^3.75",
+        "nyholm/psr7": "^1.8",
+        "php-http/mock-client": "^1.6",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^12.5"
     },
     "scripts": {
+        "check": [
+            "@phpcs",
+            "@phpstan",
+            "@test"
+        ],
+        "cs-fix": "php-cs-fixer fix",
+        "phpcs": "php-cs-fixer fix --dry-run --diff --verbose",
+        "phpstan": "phpstan analyse --memory-limit=1G",
         "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": false
+        }
     }
 }
