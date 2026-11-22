@@ -205,6 +205,27 @@ final class CompletePurchaseRequestTest extends TestCase
         $this->send(['VS' => '123456', 'RES' => 'OK', 'SIGN' => self::SIGN_OK], 'another secret');
     }
 
+    public function testAccessors(): void
+    {
+        $request = new CompletePurchaseRequest(self::createStub(ClientInterface::class), new HttpRequest());
+        $request->initialize(['sharedSecret' => 'secret', 'vs' => '1', 'ss' => '2']);
+
+        self::assertSame('secret', $request->getSharedSecret());
+        self::assertSame('1', $request->getVs());
+        self::assertSame('2', $request->getSs());
+    }
+
+    public function testResponseWithNonStringData(): void
+    {
+        $request = new CompletePurchaseRequest(self::createStub(ClientInterface::class), new HttpRequest());
+        $response = new CompletePurchaseResponse($request, ['RES' => ['OK'], 'VS' => 123456]);
+
+        self::assertFalse($response->isSuccessful());
+        self::assertNull($response->getRes());
+        self::assertNull($response->getVs());
+        self::assertNull($response->getSs());
+    }
+
     public function testResponseWithoutData(): void
     {
         $request = new CompletePurchaseRequest(self::createStub(ClientInterface::class), new HttpRequest());

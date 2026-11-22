@@ -178,6 +178,32 @@ final class PurchaseRequestTest extends TestCase
         $this->request($parameters)->getData();
     }
 
+    public function testAccessors(): void
+    {
+        $request = $this->request([]);
+        $request->setMid('m')->setSharedSecret('s')->setTestHost('h')->setVs('v')->setCs('c')
+            ->setSs('ss')->setRsms('r')->setRem('e')->setRurl('u');
+
+        self::assertSame('m', $request->getMid());
+        self::assertSame('s', $request->getSharedSecret());
+        self::assertSame('h', $request->getTestHost());
+        self::assertSame('v', $request->getVs());
+        self::assertSame('c', $request->getCs());
+        self::assertSame('ss', $request->getSs());
+        self::assertSame('r', $request->getRsms());
+        self::assertSame('e', $request->getRem());
+        self::assertSame('u', $request->getRurl());
+
+        $request->setSs(null);
+        self::assertNull($request->getSs());
+    }
+
+    public function testGenerateSignature(): void
+    {
+        // printf '%s' 'abc' | openssl dgst -sha256 -hmac <SECRET>
+        self::assertSame('09C24226F71A400C66F61065D815D97F4A8C07055426B277031136EFAE34D63D', $this->request([])->generateSignature('abc'));
+    }
+
     public function testSendDataRejectsNonArray(): void
     {
         $this->expectException(InvalidRequestException::class);
