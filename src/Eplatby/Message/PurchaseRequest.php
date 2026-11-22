@@ -1,24 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Omnipay\Eplatby\Message;
 
-use Omnipay\Common\Currency;
-use Omnipay\Eplatby\Sign\HmacSign;
+use Omnipay\Common\Exception\InvalidRequestException;
 use Omnipay\Common\Message\AbstractRequest;
+use Omnipay\Eplatby\Sign\HmacSign;
+use Omnipay\Eplatby\StringParameterTrait;
 
 class PurchaseRequest extends AbstractRequest
 {
-    public function initialize(array $parameters = array())
-    {
-        parent::initialize($parameters);
-        return $this;
-    }
+    use StringParameterTrait;
 
-    public function getData()
+    /**
+     * @return array<string, ?string>
+     */
+    #[\Override]
+    public function getData(): array
     {
         $this->validate('sharedSecret', 'mid', 'vs', 'rurl');
         $data = [];
-        
+
         $data['MID'] = $this->getMid();
         $data['AMT'] = $this->getAmount();
         $data['VS'] = $this->getVs();
@@ -31,122 +34,135 @@ class PurchaseRequest extends AbstractRequest
         return $data;
     }
 
-    public function generateSignature($data)
+    public function generateSignature(string $data): string
     {
         $sign = new HmacSign();
-        return $sign->sign($data, $this->getParameter('sharedSecret'));
+        return $sign->sign($data, $this->getSharedSecret() ?? '');
     }
 
-    public function sendData($data)
+    #[\Override]
+    public function sendData(mixed $data): PurchaseResponse
     {
-        $sharedSecret = $this->getParameter('sharedSecret');
+        if (!is_array($data)) {
+            throw new InvalidRequestException('Purchase data must be an array');
+        }
 
-        $input = "{$this->getMid()}{$this->getAmount()}{$this->getVs()}{$this->getCs()}{$this->getRurl()}";
+        $input = $this->getMid() . $this->getAmount() . $this->getVs() . $this->getCs() . $this->getRurl();
         $data['SIGN'] = $this->generateSignature($input);
 
         return $this->response = new PurchaseResponse($this, $data);
     }
 
-    public function getEndpoint()
+    public function getEndpoint(): string
     {
-        $sharedSecret = $this->getParameter('sharedSecret');
-
-        if ($this->getTestmode()) {
-            $host = $this->getParameter('testHost') ?: 'https://platby.tomaj.sk';
+        if ($this->getTestMode()) {
+            $host = $this->getTestHost();
+            if ($host === null || $host === '') {
+                $host = 'https://platby.tomaj.sk';
+            }
             return $host . '/payment/eplatby-hmac';
-        } else {
-            // return 'https://nib.vub.sk/nepay/merchant'; // vub test server
-            return 'https://ib.vub.sk/e-platbyeuro.aspx';
         }
+
+        // return 'https://nib.vub.sk/nepay/merchant'; // vub test server
+        return 'https://ib.vub.sk/e-platbyeuro.aspx';
     }
 
-    public function getMid()
+    public function getMid(): ?string
     {
-        return $this->getParameter('mid');
+        return $this->getStringParameter('mid');
     }
 
-    public function setMid($value)
+    public function setMid(?string $value): static
     {
-        return $this->setParameter('mid', $value);
+        $this->setParameter('mid', $value);
+        return $this;
     }
 
-    public function getSharedSecret()
+    public function getSharedSecret(): ?string
     {
-        return $this->getParameter('sharedSecret');
+        return $this->getStringParameter('sharedSecret');
     }
 
-    public function setSharedSecret($value)
+    public function setSharedSecret(?string $value): static
     {
-        return $this->setParameter('sharedSecret', $value);
+        $this->setParameter('sharedSecret', $value);
+        return $this;
     }
 
-    public function getTestHost()
+    public function getTestHost(): ?string
     {
-        return $this->getParameter('testHost');
+        return $this->getStringParameter('testHost');
     }
 
-    public function setTestHost($value)
+    public function setTestHost(?string $value): static
     {
-        return $this->setParameter('testHost', $value);
+        $this->setParameter('testHost', $value);
+        return $this;
     }
 
-    public function getVs()
+    public function getVs(): ?string
     {
-        return $this->getParameter('vs');
+        return $this->getStringParameter('vs');
     }
 
-    public function setVs($value)
+    public function setVs(?string $value): static
     {
-        return $this->setParameter('vs', $value);
+        $this->setParameter('vs', $value);
+        return $this;
     }
 
-    public function getCs()
+    public function getCs(): ?string
     {
-        return $this->getParameter('cs');
+        return $this->getStringParameter('cs');
     }
 
-    public function setCs($value)
+    public function setCs(?string $value): static
     {
-        return $this->setParameter('cs', $value);
+        $this->setParameter('cs', $value);
+        return $this;
     }
 
-    public function getSs()
+    public function getSs(): ?string
     {
-        return $this->getParameter('ss');
+        return $this->getStringParameter('ss');
     }
 
-    public function setSs($value)
+    public function setSs(?string $value): static
     {
-        return $this->setParameter('ss', $value);
+        $this->setParameter('ss', $value);
+        return $this;
     }
 
-    public function getRsms()
+    public function getRsms(): ?string
     {
-        return $this->getParameter('rsms');
+        return $this->getStringParameter('rsms');
     }
 
-    public function setRsms($value)
+    public function setRsms(?string $value): static
     {
-        return $this->setParameter('rsms', $value);
+        $this->setParameter('rsms', $value);
+        return $this;
     }
 
-    public function getRem()
+    public function getRem(): ?string
     {
-        return $this->getParameter('rem');
+        return $this->getStringParameter('rem');
     }
 
-    public function setRem($value)
+    public function setRem(?string $value): static
     {
-        return $this->setParameter('rem', $value);
+        $this->setParameter('rem', $value);
+        return $this;
     }
 
-    public function getRurl()
+    public function getRurl(): ?string
     {
-        return $this->getParameter('rurl');
+        return $this->getStringParameter('rurl');
     }
-    
-    public function setRurl($value)
+
+    public function setRurl(?string $value): static
     {
-        return $this->setParameter('rurl', $value);
+        $this->setParameter('rurl', $value);
+        return $this;
     }
 }

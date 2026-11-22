@@ -21,18 +21,37 @@
         }
     ],
     "autoload": {
-        "psr-4": { 
+        "psr-4": {
             "Omnipay\\": "src/"
         }
     },
     "require": {
-        "omnipay/common": "~3.0"
+        "php": "^8.3",
+        "ext-hash": "*",
+        "omnipay/common": "^3.2"
     },
     "require-dev": {
-        "omnipay/tests": "~3.0",
-        "squizlabs/php_codesniffer": "^1.5"
+        "friendsofphp/php-cs-fixer": "^3.75",
+        "nyholm/psr7": "^1.8",
+        "php-http/mock-client": "^1.6",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0"
     },
     "scripts": {
-        "test": "phpunit"
+        "check": [
+            "@phpcs",
+            "@phpstan",
+            "@lint"
+        ],
+        "cs-fix": "php-cs-fixer fix",
+        "lint": "find src -name '*.php' -print0 | xargs -0 -n1 php -l",
+        "phpcs": "php-cs-fixer fix --dry-run --diff --verbose",
+        "phpstan": "phpstan analyse --memory-limit=1G"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": false
+        }
     }
 }

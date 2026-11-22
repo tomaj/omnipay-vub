@@ -1,42 +1,62 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Omnipay\Eplatby\Message;
 
 use Omnipay\Common\Exception\InvalidRequestException;
 use Omnipay\Common\Message\AbstractRequest;
 use Omnipay\Eplatby\Sign\HmacSign;
+use Omnipay\Eplatby\StringParameterTrait;
 
 class CompletePurchaseRequest extends AbstractRequest
 {
-    public function getData()
+    use StringParameterTrait;
+
+    /**
+     * @return array{RES: string, VS: string}
+     */
+    #[\Override]
+    public function getData(): array
     {
-        $sharedSecret = $this->getParameter('sharedSecret');
+        $vs = self::queryString('VS');
+        $res = self::queryString('RES');
+        $receivedSign = self::queryString('SIGN');
 
-        $data = "{$_GET['VS']}{$_GET['RES']}";
         $sign = new HmacSign();
+        $expectedSign = $sign->sign($vs . $res, $this->getSharedSecret() ?? '');
 
-        if ($sign->sign($data, $sharedSecret) != $_GET['SIGN']) {
+        if (!hash_equals($expectedSign, $receivedSign)) {
             throw new InvalidRequestException('incorect signature');
         }
 
         return [
-            'RES' => $_GET['RES'],
-            'VS' => $_GET['VS'],
+            'RES' => $res,
+            'VS' => $vs,
         ];
     }
 
-    public function sendData($data)
+    #[\Override]
+    public function sendData(mixed $data): CompletePurchaseResponse
     {
         return $this->response = new CompletePurchaseResponse($this, $data);
     }
 
-    public function getSharedSecret()
+    public function getSharedSecret(): ?string
     {
-        return $this->getParameter('sharedSecret');
+        return $this->getStringParameter('sharedSecret');
     }
 
-    public function setSharedSecret($value)
+    public function setSharedSecret(?string $value): static
     {
-        return $this->setParameter('sharedSecret', $value);
+        $this->setParameter('sharedSecret', $value);
+        return $this;
+    }
+
+    private static function queryString(string $key): string
+    {
+        $value = $_GET[$key] ?? '';
+
+        return is_string($value) ? $value : '';
     }
 }
