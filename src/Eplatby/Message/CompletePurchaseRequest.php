@@ -19,9 +19,9 @@ class CompletePurchaseRequest extends AbstractRequest
     #[\Override]
     public function getData(): array
     {
-        $vs = self::queryString('VS');
-        $res = self::queryString('RES');
-        $receivedSign = self::queryString('SIGN');
+        $vs = $this->queryString('VS');
+        $res = $this->queryString('RES');
+        $receivedSign = $this->queryString('SIGN');
 
         $sign = new HmacSign();
         $expectedSign = $sign->sign($vs . $res, $this->getSharedSecret() ?? '');
@@ -53,7 +53,7 @@ class CompletePurchaseRequest extends AbstractRequest
         return $this;
     }
 
-    private static function queryString(string $key): string
+    private function queryString(string $key): string
     {
         $value = $_GET[$key] ?? '';
 

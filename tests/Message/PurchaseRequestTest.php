@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Request as HttpRequest;
 
 final class PurchaseRequestTest extends TestCase
 {
-    private const SECRET = '1111111111111111111111111111111111111111111111111111111111111111';
+    private const string SECRET = '1111111111111111111111111111111111111111111111111111111111111111';
 
     /**
      * @param array<string, mixed> $parameters

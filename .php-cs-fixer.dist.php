@@ -20,6 +20,7 @@ return (new PhpCsFixer\Config())
         'trailing_comma_in_multiline' => [
             'elements' => ['arrays', 'arguments', 'parameters'],
         ],
+        'php_unit_test_case_static_method_calls' => ['call_type' => 'self'],
     ])
     ->setFinder($finder)
     ->setRiskyAllowed(true)
