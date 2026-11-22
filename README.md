@@ -22,6 +22,7 @@ Development
 -----------
 
 ```bash
-composer check   # code style, PHPStan, lint
+composer check   # code style, PHPStan, tests
+composer test    # PHPUnit
 composer cs-fix  # apply code style
 ```

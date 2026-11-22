@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: Lint PHP ${{ matrix.php }} ${{ matrix.dependency-version }}
+  tests:
+    name: PHP ${{ matrix.php }} ${{ matrix.dependency-version }}
     runs-on: ubuntu-latest
     # PHP 8.7 is a nightly build: it runs to show problems early but does not fail the workflow
     continue-on-error: ${{ matrix.php == '8.7' }}
@@ -49,9 +49,8 @@ jobs:
       # dev dependencies cap their PHP version, so the nightly ignores the upper bound
       run: composer update ${{ matrix.dependency-version }} ${{ matrix.php == '8.7' && '--ignore-platform-req=php+' || '' }} --prefer-dist --no-progress --no-interaction
 
-    - name: Lint sources
-      # the package has no test suite yet; make sure every file at least compiles
-      run: find src -name '*.php' -print0 | xargs -0 -n1 php -l
+    - name: Run tests
+      run: vendor/bin/phpunit
 
   code-style:
     name: Code Style (PER-CS + PHP 8.3)

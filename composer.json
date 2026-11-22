@@ -25,6 +25,11 @@
             "Omnipay\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Omnipay\\Eplatby\\Tests\\": "tests/"
+        }
+    },
     "require": {
         "php": "^8.3",
         "ext-hash": "*",
@@ -35,18 +40,20 @@
         "nyholm/psr7": "^1.8",
         "php-http/mock-client": "^1.6",
         "phpstan/phpstan": "^2.1",
-        "phpstan/phpstan-strict-rules": "^2.0"
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^12.5"
     },
     "scripts": {
         "check": [
             "@phpcs",
             "@phpstan",
-            "@lint"
+            "@test"
         ],
         "cs-fix": "php-cs-fixer fix",
-        "lint": "find src -name '*.php' -print0 | xargs -0 -n1 php -l",
         "phpcs": "php-cs-fixer fix --dry-run --diff --verbose",
-        "phpstan": "phpstan analyse --memory-limit=1G"
+        "phpstan": "phpstan analyse --memory-limit=1G",
+        "test": "phpunit"
     },
     "config": {
         "sort-packages": true,
