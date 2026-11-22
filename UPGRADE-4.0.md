@@ -25,6 +25,21 @@ if ($response->isSuccessful()) {
 
 Without `vs`, `completePurchase()->send()` throws `InvalidRequestException('The vs parameter is required')`. The comparison is exact (`'0123'` is not `'123'`), so pass the variable symbol exactly as you sent it in `purchase()`.
 
+## The specific symbol is signed
+
+VÚB signs the specific symbol (`SS`): the payment request is signed over `MID + AMT + VS + SS + CS + RURL` and the return over `VS + SS + RES`. Without a specific symbol nothing changes. With one, pass the same `ss` to `completePurchase()`:
+
+```php
+// 3.x: SS was posted but not signed, so VÚB rejected the payment
+$gateway->purchase(['vs' => '2024000123', 'ss' => '77', 'amount' => '10.00', 'rurl' => '...'])->send();
+$gateway->completePurchase()->send();
+
+// 4.0
+$gateway->purchase(['vs' => '2024000123', 'ss' => '77', 'amount' => '10.00', 'rurl' => '...'])->send();
+$gateway->completePurchase(['vs' => '2024000123', 'ss' => '77'])->send();
+// throws InvalidRequestException('Specific symbol mismatch') when the returned SS is another one
+```
+
 ## PHP 8.4 and omnipay/common 3.2
 
 `composer.json` requires `"php": "^8.4"` and `"omnipay/common": "^3.2"`. Upgrade PHP first, then:

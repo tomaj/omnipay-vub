@@ -53,7 +53,8 @@ final class PurchaseRequest extends AbstractRequest
             throw new InvalidRequestException('Purchase data must be an array');
         }
 
-        $input = $this->getMid() . $this->getAmount() . $this->getVs() . $this->getCs() . $this->getRurl();
+        // VÚB e-platby HMAC: MID + AMT + VS + SS + CS + RURL (an empty SS or CS adds nothing)
+        $input = $this->getMid() . $this->getAmount() . $this->getVs() . $this->getSs() . $this->getCs() . $this->getRurl();
         $data['SIGN'] = $this->generateSignature($input);
 
         return $this->response = new PurchaseResponse($this, $data);
@@ -69,7 +70,6 @@ final class PurchaseRequest extends AbstractRequest
             return $host . '/payment/eplatby-hmac';
         }
 
-        // return 'https://nib.vub.sk/nepay/merchant'; // vub test server
         return 'https://ib.vub.sk/e-platbyeuro.aspx';
     }
 

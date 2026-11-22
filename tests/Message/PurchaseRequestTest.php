@@ -61,7 +61,7 @@ final class PurchaseRequestTest extends TestCase
         ], $data);
     }
 
-    public function testSendSignsMidAmountVsCsRurl(): void
+    public function testSendSignsMidAmountVsSsCsRurl(): void
     {
         $response = $this->send([
             'amount' => '10.00',
@@ -76,9 +76,25 @@ final class PurchaseRequestTest extends TestCase
         self::assertSame('POST', $response->getRedirectMethod());
 
         $data = $response->getRedirectData();
-        // HMAC-SHA256 of "11111111" . "10.00" . "123456" . "0321" . rurl, verified with the openssl CLI
-        self::assertSame('E227E97C520A502C45B77AEF4ABE5252A3F3065DB96C471C36FAD186FA50E62E', $data['SIGN']);
+        // HMAC-SHA256 of "11111111" . "10.00" . "123456" . "77" . "0321" . rurl, verified with the openssl CLI
+        self::assertSame('CF8266A0FFC44C09EC9CDB0D91999298A511BD40B595798DD02DDF2CC86AA7C4', $data['SIGN']);
         self::assertSame('77', $data['SS']);
+    }
+
+    public function testSignatureWithoutSs(): void
+    {
+        foreach ([null, ''] as $ss) {
+            $data = $this->send([
+                'amount' => '10.00',
+                'vs' => '123456',
+                'cs' => '0321',
+                'ss' => $ss,
+                'rurl' => 'http://localhost:4444/testserver.php',
+            ])->getRedirectData();
+
+            // HMAC-SHA256 of "11111111" . "10.00" . "123456" . "0321" . rurl, verified with the openssl CLI
+            self::assertSame('E227E97C520A502C45B77AEF4ABE5252A3F3065DB96C471C36FAD186FA50E62E', $data['SIGN']);
+        }
     }
 
     public function testSignatureSkipsMissingOptionalCs(): void

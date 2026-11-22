@@ -24,10 +24,10 @@ final class CompletePurchaseRequestTest extends TestCase
     /**
      * @param array<string, mixed> $query
      */
-    private function send(array $query, string $secret = self::SECRET, ?string $expectedVs = '123456'): CompletePurchaseResponse
+    private function send(array $query, string $secret = self::SECRET, ?string $expectedVs = '123456', ?string $expectedSs = null): CompletePurchaseResponse
     {
         $request = new CompletePurchaseRequest(self::createStub(ClientInterface::class), new HttpRequest($query));
-        $request->initialize(['sharedSecret' => $secret, 'vs' => $expectedVs]);
+        $request->initialize(['sharedSecret' => $secret, 'vs' => $expectedVs, 'ss' => $expectedSs]);
 
         return $request->sendData($request->getData());
     }
@@ -40,7 +40,8 @@ final class CompletePurchaseRequestTest extends TestCase
         self::assertFalse($response->isRedirect());
         self::assertSame('OK', $response->getRes());
         self::assertSame('123456', $response->getVs());
-        self::assertSame(['RES' => 'OK', 'VS' => '123456'], $response->getData());
+        self::assertSame('', $response->getSs());
+        self::assertSame(['RES' => 'OK', 'VS' => '123456', 'SS' => ''], $response->getData());
     }
 
     /**
@@ -148,6 +149,55 @@ final class CompletePurchaseRequestTest extends TestCase
         $this->send(['VS' => '123456', 'RES' => 'FAIL', 'SIGN' => self::SIGN_FAIL], expectedVs: '654321');
     }
 
+    public function testSpecificSymbolIsSigned(): void
+    {
+        // HMAC-SHA256 of "123456" . "77" . "OK" / "FAIL", verified with the openssl CLI
+        $response = $this->send(['VS' => '123456', 'SS' => '77', 'RES' => 'OK', 'SIGN' => '129A0AB7D7683C36DC1F9D60EBB97F5814F91A79D40CADA0C3D08C1C763DD065'], expectedSs: '77');
+
+        self::assertTrue($response->isSuccessful());
+        self::assertSame('77', $response->getSs());
+        self::assertSame(['RES' => 'OK', 'VS' => '123456', 'SS' => '77'], $response->getData());
+
+        $response = $this->send(['VS' => '123456', 'SS' => '77', 'RES' => 'FAIL', 'SIGN' => '682C4E6A0A2320359835425DBBEB56901CD78E6B956237A00116139614F8EBA0'], expectedSs: '77');
+        self::assertFalse($response->isSuccessful());
+    }
+
+    public function testSpecificSymbolOutsideTheSignatureThrows(): void
+    {
+        // SIGN covers "123456" . "OK" only, so an added SS breaks it
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('incorect signature');
+
+        $this->send(['VS' => '123456', 'SS' => '77', 'RES' => 'OK', 'SIGN' => self::SIGN_OK], expectedSs: '77');
+    }
+
+    public function testUnexpectedSpecificSymbolThrows(): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('Specific symbol mismatch');
+
+        $this->send(['VS' => '123456', 'SS' => '77', 'RES' => 'OK', 'SIGN' => '129A0AB7D7683C36DC1F9D60EBB97F5814F91A79D40CADA0C3D08C1C763DD065']);
+    }
+
+    public function testMissingExpectedSpecificSymbolThrows(): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('Specific symbol mismatch');
+
+        $this->send(['VS' => '123456', 'RES' => 'OK', 'SIGN' => self::SIGN_OK], expectedSs: '77');
+    }
+
+    public function testDigitsCannotMoveBetweenVsAndSs(): void
+    {
+        // "12345" . "6" . "OK" is the same signed string as "123456" . "" . "OK"
+        $query = ['VS' => '12345', 'SS' => '6', 'RES' => 'OK', 'SIGN' => self::SIGN_OK];
+
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('Specific symbol mismatch');
+
+        $this->send($query, expectedVs: '12345');
+    }
+
     public function testWrongSecretThrows(): void
     {
         $this->expectException(InvalidRequestException::class);
@@ -163,5 +213,6 @@ final class CompletePurchaseRequestTest extends TestCase
         self::assertFalse($response->isSuccessful());
         self::assertNull($response->getRes());
         self::assertNull($response->getVs());
+        self::assertNull($response->getSs());
     }
 }

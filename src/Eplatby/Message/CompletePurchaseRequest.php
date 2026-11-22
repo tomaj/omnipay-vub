@@ -16,12 +16,12 @@ final class CompletePurchaseRequest extends AbstractRequest
     /**
      * Verifies the bank's return request and that it belongs to the expected order.
      *
-     * The bank signs only the variable symbol and the result, not the amount: load the
+     * The bank signs only VS + SS + RES (variable symbol, specific symbol, result), not the amount: load the
      * order by its variable symbol and take the amount from your own records.
      *
-     * @return array{RES: string, VS: string}
+     * @return array{RES: string, VS: string, SS: string}
      * @throws InvalidRequestException when the vs parameter is missing, the signature is invalid,
-     *                                 or the returned VS is not the expected one
+     *                                 or the returned VS or SS is not the expected one
      */
     #[\Override]
     public function getData(): array
@@ -32,11 +32,12 @@ final class CompletePurchaseRequest extends AbstractRequest
         }
 
         $vs = $this->queryString('VS');
+        $ss = $this->queryString('SS');
         $res = $this->queryString('RES');
         $receivedSign = $this->queryString('SIGN');
 
         $sign = new HmacSign();
-        $expectedSign = $sign->sign($vs . $res, $this->getSharedSecret() ?? '');
+        $expectedSign = $sign->sign($vs . $ss . $res, $this->getSharedSecret() ?? '');
 
         if (!hash_equals($expectedSign, $receivedSign)) {
             throw new InvalidRequestException('incorect signature');
@@ -46,9 +47,16 @@ final class CompletePurchaseRequest extends AbstractRequest
             throw new InvalidRequestException('Variable symbol mismatch');
         }
 
+        // VS and SS are concatenated without a separator, so SS is pinned too: otherwise digits
+        // could move between them ("12345" + "6" signs the same as "123456" + "")
+        if ($ss !== ($this->getSs() ?? '')) {
+            throw new InvalidRequestException('Specific symbol mismatch');
+        }
+
         return [
             'RES' => $res,
             'VS' => $vs,
+            'SS' => $ss,
         ];
     }
 
@@ -86,6 +94,20 @@ final class CompletePurchaseRequest extends AbstractRequest
     public function setVs(?string $value): static
     {
         $this->setParameter('vs', $value);
+        return $this;
+    }
+
+    /**
+     * The specific symbol sent in purchase(), if any; the returned SS must be equal to it ('' when null).
+     */
+    public function getSs(): ?string
+    {
+        return $this->getStringParameter('ss');
+    }
+
+    public function setSs(?string $value): static
+    {
+        $this->setParameter('ss', $value);
         return $this;
     }
 

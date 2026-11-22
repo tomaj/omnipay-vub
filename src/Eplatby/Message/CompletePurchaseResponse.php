@@ -26,6 +26,14 @@ final class CompletePurchaseResponse extends AbstractResponse
         return $this->dataString('VS');
     }
 
+    /**
+     * The specific symbol returned (and signed) by the bank; '' when the payment had none.
+     */
+    public function getSs(): ?string
+    {
+        return $this->dataString('SS');
+    }
+
     private function dataString(string $key): ?string
     {
         if (is_array($this->data) && isset($this->data[$key]) && is_string($this->data[$key])) {
