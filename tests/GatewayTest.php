@@ -70,7 +70,7 @@ final class GatewayTest extends TestCase
         $gateway = new Gateway(self::createStub(ClientInterface::class), new HttpRequest($query));
         $gateway->setSharedSecret('1111111111111111111111111111111111111111111111111111111111111111');
 
-        $response = $gateway->completePurchase()->send();
+        $response = $gateway->completePurchase(['vs' => '123456'])->send();
 
         self::assertTrue($response->isSuccessful());
         self::assertSame('123456', $response->getVs());

@@ -14,11 +14,23 @@ final class CompletePurchaseRequest extends AbstractRequest
     use StringParameterTrait;
 
     /**
+     * Verifies the bank's return request and that it belongs to the expected order.
+     *
+     * The bank signs only the variable symbol and the result, not the amount: load the
+     * order by its variable symbol and take the amount from your own records.
+     *
      * @return array{RES: string, VS: string}
+     * @throws InvalidRequestException when the vs parameter is missing, the signature is invalid,
+     *                                 or the returned VS is not the expected one
      */
     #[\Override]
     public function getData(): array
     {
+        $expectedVs = $this->getVs();
+        if ($expectedVs === null || $expectedVs === '') {
+            throw new InvalidRequestException('The vs parameter is required');
+        }
+
         $vs = $this->queryString('VS');
         $res = $this->queryString('RES');
         $receivedSign = $this->queryString('SIGN');
@@ -28,6 +40,10 @@ final class CompletePurchaseRequest extends AbstractRequest
 
         if (!hash_equals($expectedSign, $receivedSign)) {
             throw new InvalidRequestException('incorect signature');
+        }
+
+        if ($vs !== $expectedVs) {
+            throw new InvalidRequestException('Variable symbol mismatch');
         }
 
         return [
@@ -56,6 +72,20 @@ final class CompletePurchaseRequest extends AbstractRequest
     public function setSharedSecret(?string $value): static
     {
         $this->setParameter('sharedSecret', $value);
+        return $this;
+    }
+
+    /**
+     * The variable symbol of the order being completed; the returned VS must be equal to it.
+     */
+    public function getVs(): ?string
+    {
+        return $this->getStringParameter('vs');
+    }
+
+    public function setVs(?string $value): static
+    {
+        $this->setParameter('vs', $value);
         return $this;
     }
 

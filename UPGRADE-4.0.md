@@ -2,6 +2,29 @@
 
 4.0 requires PHP 8.4, types the public API, makes the classes `final` and checks that the bank's return belongs to the order you are completing. Each change below shows the code before and after.
 
+## `completePurchase()` requires the expected variable symbol
+
+The bank's return is signed over the variable symbol and the result only. 3.x accepted any correctly signed return, so the success return URL of one order also completed another. 4.0 requires the variable symbol of the order you are completing and compares it with the signed `VS`:
+
+```php
+// 3.x
+$response = $gateway->completePurchase()->send();
+if ($response->isSuccessful()) {
+    $order = $orders->findByVs($response->getVs());
+    $order->markPaid();
+}
+
+// 4.0
+$order = $orders->findByVs($request->getQuery('VS')); // or the order from your session
+$response = $gateway->completePurchase(['vs' => $order->vs])->send();
+// throws InvalidRequestException('Variable symbol mismatch') when the signed VS is another one
+if ($response->isSuccessful()) {
+    $order->markPaid(); // the amount is the one stored with the order: the bank does not sign it
+}
+```
+
+Without `vs`, `completePurchase()->send()` throws `InvalidRequestException('The vs parameter is required')`. The comparison is exact (`'0123'` is not `'123'`), so pass the variable symbol exactly as you sent it in `purchase()`.
+
 ## PHP 8.4 and omnipay/common 3.2
 
 `composer.json` requires `"php": "^8.4"` and `"omnipay/common": "^3.2"`. Upgrade PHP first, then:

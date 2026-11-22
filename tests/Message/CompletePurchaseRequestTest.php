@@ -24,10 +24,10 @@ final class CompletePurchaseRequestTest extends TestCase
     /**
      * @param array<string, mixed> $query
      */
-    private function send(array $query, string $secret = self::SECRET): CompletePurchaseResponse
+    private function send(array $query, string $secret = self::SECRET, ?string $expectedVs = '123456'): CompletePurchaseResponse
     {
         $request = new CompletePurchaseRequest(self::createStub(ClientInterface::class), new HttpRequest($query));
-        $request->initialize(['sharedSecret' => $secret]);
+        $request->initialize(['sharedSecret' => $secret, 'vs' => $expectedVs]);
 
         return $request->sendData($request->getData());
     }
@@ -88,6 +88,64 @@ final class CompletePurchaseRequestTest extends TestCase
         $this->expectExceptionMessageIs('incorect signature');
 
         $this->send($query);
+    }
+
+    public function testValidReturnForAnotherOrderThrows(): void
+    {
+        // a genuine, correctly signed success return of the order with VS 111 (openssl dgst -sha256 -hmac)
+        $query = ['VS' => '111', 'RES' => 'OK', 'SIGN' => '4C8AA6626570495FE62F9A4C84BBFD5829C40B8735809A990DE152967955B76A'];
+
+        self::assertTrue($this->send($query, expectedVs: '111')->isSuccessful());
+
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('Variable symbol mismatch');
+
+        $this->send($query, expectedVs: '222');
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function differentVariableSymbols(): iterable
+    {
+        yield 'leading zero' => ['0123456'];
+        yield 'trailing space' => ['123456 '];
+        yield 'prefix' => ['12345'];
+    }
+
+    #[DataProvider('differentVariableSymbols')]
+    public function testVariableSymbolIsComparedExactly(string $expectedVs): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('Variable symbol mismatch');
+
+        $this->send(['VS' => '123456', 'RES' => 'OK', 'SIGN' => self::SIGN_OK], expectedVs: $expectedVs);
+    }
+
+    /**
+     * @return iterable<string, array{?string}>
+     */
+    public static function missingVariableSymbols(): iterable
+    {
+        yield 'null' => [null];
+        yield 'empty' => [''];
+    }
+
+    #[DataProvider('missingVariableSymbols')]
+    public function testExpectedVariableSymbolIsRequired(?string $expectedVs): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('The vs parameter is required');
+
+        $this->send(['VS' => '', 'RES' => 'OK', 'SIGN' => self::SIGN_OK], expectedVs: $expectedVs);
+    }
+
+    public function testMismatchedVariableSymbolOfFailedPaymentThrows(): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('Variable symbol mismatch');
+
+        $this->send(['VS' => '123456', 'RES' => 'FAIL', 'SIGN' => self::SIGN_FAIL], expectedVs: '654321');
     }
 
     public function testWrongSecretThrows(): void

@@ -32,6 +32,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Security
 
+* **Security**: **BREAKING CHANGE**: `completePurchase()` requires the `vs` parameter (the variable symbol of the order being completed) and throws `InvalidRequestException('Variable symbol mismatch')` when the bank's signed `VS` differs, so a genuine return URL of one order can no longer complete another. Without `vs` it throws `InvalidRequestException('The vs parameter is required')`. The bank does not sign the amount: load the order by its variable symbol and use the amount stored with it. See [UPGRADE-4.0.md](UPGRADE-4.0.md) ([#13](https://github.com/tomaj/omnipay-vub/issues/13)).
 * **Security**: `CompletePurchaseRequest` compares the `SIGN` query parameter with `hash_equals()` instead of `!=`, so numeric-looking or non-string signatures no longer pass a loose comparison ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).
 
 ## [3.1.0] - 2022-08-24
