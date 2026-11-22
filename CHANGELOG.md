@@ -26,4 +26,4 @@
 
 ### Removed
 
-- Travis CI configuration, the abandoned `omnipay/tests` and `squizlabs/php_codesniffer` dev dependencies.
+- Travis CI configuration, the unused `omnipay/tests` and `squizlabs/php_codesniffer` dev dependencies.
