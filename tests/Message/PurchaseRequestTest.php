@@ -160,7 +160,7 @@ final class PurchaseRequestTest extends TestCase
         $parameters = ['amount' => '1.00', 'vs' => '1', 'rurl' => 'http://x', $parameter => null];
 
         $this->expectException(InvalidRequestException::class);
-        $this->expectExceptionMessage("The {$parameter} parameter is required");
+        $this->expectExceptionMessageIs("The {$parameter} parameter is required");
 
         $this->request($parameters)->getData();
     }

@@ -38,6 +38,6 @@ final class HmacSignTest extends TestCase
     #[DataProvider('vectors')]
     public function testSign(string $input, string $secret, string $expected): void
     {
-        self::assertSame($expected, (new HmacSign())->sign($input, $secret));
+        self::assertSame($expected, new HmacSign()->sign($input, $secret));
     }
 }

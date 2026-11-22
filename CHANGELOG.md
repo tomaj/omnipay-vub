@@ -13,7 +13,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Changed
 
-* **BREAKING CHANGE**: Requires PHP 8.3 or newer (no PHP constraint before; Travis tested PHP 5.6 and 7.0) ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).
+* **BREAKING CHANGE**: Requires PHP 8.4 or newer (no PHP constraint before; Travis tested PHP 5.6 and 7.0) ([#4](https://github.com/tomaj/omnipay-vub/pull/4), [#8](https://github.com/tomaj/omnipay-vub/issues/8)).
 * **BREAKING CHANGE**: Requires `omnipay/common` ^3.2 (was ~3.0) ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).
 * **BREAKING CHANGE**: Parameter getters and setters are typed: getters return `?string`, setters take `?string` and return `static`; `HmacSign::sign()` takes and returns `string`. Code that extends these classes must match the new signatures ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).
 * **BREAKING CHANGE**: Setters are called with the declared `?string` type: passing an `int` (e.g. `setVs(123)`) from a file with `declare(strict_types=1)` now throws a `TypeError`; values passed through `initialize()`/`purchase([...])` are still coerced. An `int` variable symbol is now posted as a string (`"123"`), the signature is unchanged ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).

@@ -101,7 +101,7 @@ final class CompletePurchaseRequestTest extends TestCase
     public function testInvalidSignatureThrows(array $query): void
     {
         $this->expectException(InvalidRequestException::class);
-        $this->expectExceptionMessage('incorect signature');
+        $this->expectExceptionMessageIs('incorect signature');
 
         $this->send($query);
     }
