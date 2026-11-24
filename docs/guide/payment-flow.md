@@ -2,10 +2,7 @@
 
 VÚB e-platby is a redirect payment: your server never talks to the bank. The customer's browser carries a signed request to VÚB and a signed answer back. The gateway builds the first and verifies the second.
 
-<figure class="ot-diagram">
-  <img class="light-only" src="/diagrams/flow-light.svg" alt="Sequence: the customer pays in the shop; purchase() answers with an auto-submitting form carrying the signed fields; the browser posts it to VÚB e-platby; the customer pays in internet banking; VÚB redirects the browser to the return URL with VS, SS, RES and SIGN; completePurchase() verifies the signature and the symbols" width="760" height="512">
-  <img class="dark-only" src="/diagrams/flow-dark.svg" alt="Sequence: the customer pays in the shop; purchase() answers with an auto-submitting form carrying the signed fields; the browser posts it to VÚB e-platby; the customer pays in internet banking; VÚB redirects the browser to the return URL with VS, SS, RES and SIGN; completePurchase() verifies the signature and the symbols" width="760" height="512">
-</figure>
+<Diagram name="flow" :width="760" :height="512" alt="Sequence: the customer pays in the shop; purchase() answers with an auto-submitting form carrying the signed fields; the browser posts it to VÚB e-platby; the customer pays in internet banking; VÚB redirects the browser to the return URL with VS, SS, RES and SIGN; completePurchase() verifies the signature and the symbols" />
 
 ## Step by step
 
