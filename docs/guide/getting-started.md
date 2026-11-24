@@ -1,13 +1,13 @@
 # Getting started
 
-omnipay-vub is a gateway for [Omnipay](https://omnipay.thephpleague.com/) that pays through [VÚB e-platby](https://www.vub.sk/en/firmy-a-podnikatelia/platby/eplatby.html), the payment button of VÚB banka (Slovakia). The customer is redirected to VÚB internet banking, confirms the payment there and comes back to your return URL with the result.
+omnipay-vub is a gateway for [Omnipay](https://omnipay.thephpleague.com/), the PHP payment processing library. It pays through [VÚB e-platby](https://www.vub.sk/en/firmy-a-podnikatelia/platby/eplatby.html), the payment button of VÚB banka (Slovakia): the customer is sent to VÚB internet banking, confirms the payment there and comes back to your return URL with a signed result.
 
 ## Requirements
 
 - PHP 8.4 or newer (tested on 8.4, 8.5 and 8.6) with `ext-hash`
-- `omnipay/common` ^3.2
-- an HTTP client for Omnipay: any PSR-18 client found by `php-http/discovery`, for example `php-http/guzzle7-adapter`. The gateway itself makes no HTTP calls, but Omnipay creates a client when the gateway is constructed.
-- a merchant contract with VÚB for e-platby: your **MID** and the **shared secret** (HMAC key)
+- [`omnipay/common`](https://packagist.org/packages/omnipay/common) ^3.2 (installed with the package)
+- an HTTP client for Omnipay: any PSR-18 client that `php-http/discovery` finds, for example `php-http/guzzle7-adapter`. The gateway itself makes no HTTP calls, but Omnipay creates a client when the gateway is constructed.
+- a contract with VÚB for e-platby, which gives you your **MID** (merchant ID) and the **shared secret** (the HMAC key). Until you have them, use [test mode](./test-mode).
 
 ## Installation
 
@@ -15,32 +15,86 @@ omnipay-vub is a gateway for [Omnipay](https://omnipay.thephpleague.com/) that p
 composer require tomaj/omnipay-vub php-http/guzzle7-adapter
 ```
 
-## The payment flow
+## Create the gateway
 
-1. Your checkout creates a `purchase()` request with the amount, the order's variable symbol and your return URL, and sends the customer to VÚB with an auto-submitting POST form (`redirect()`).
-2. The customer pays (or cancels) in VÚB internet banking.
-3. VÚB redirects the customer to your return URL (`RURL`) with `VS`, `SS`, `RES` and `SIGN` in the query string.
-4. Your return URL calls `completePurchase()` with the variable symbol of the order. It verifies the signature and the symbols, and `isSuccessful()` tells you whether the payment went through (`RES=OK`).
+Create it with Omnipay's factory (`Eplatby` is the gateway's short name) or with `new`:
 
-## First payment
+```php
+use Omnipay\Eplatby\Gateway;
+use Omnipay\Omnipay;
 
-The checkout page:
+$gateway = Omnipay::create('Eplatby');   // or: new Gateway()
+$gateway->setMid('12345678');
+$gateway->setSharedSecret(getenv('VUB_SHARED_SECRET') ?: str_repeat('1', 64));
+$gateway->setTestMode(true);              // the payment simulator until you go live
 
-<<< @/../examples/purchase.php
+echo $gateway->getName() . "\n";
+```
 
-The return URL:
+<!-- snippet: output -->
+```text
+VUB ePlatby Gateway
+```
 
-<<< @/../examples/return.php
+Keep the shared secret in the environment or a secret store, never in the code. Every parameter is described in [Configuration](./configuration).
 
-Both files are in [`examples/`](https://github.com/tomaj/omnipay-vub/tree/master/examples) and run in the test suite. With test mode on, the form goes to the [payment simulator](./test-mode), where you can choose a successful, failed or timed-out payment.
+## 1. Send the customer to the bank
+
+The checkout creates a `purchase()` request with the amount, the order's variable symbol and your return URL. `redirect()` prints an HTML page whose form posts itself to VÚB:
+
+```php
+$response = $gateway->purchase([
+    'amount' => '10.00',
+    'vs' => '2024000123',
+    'rurl' => 'https://shop.example/return',
+])->send();
+
+echo $response->getRedirectMethod() . ' ' . $response->getRedirectUrl() . "\n";
+echo 'SIGN=' . $response->getRedirectData()['SIGN'] . "\n";
+// in the checkout controller: $response->redirect();
+```
+
+<!-- snippet: output -->
+```text
+POST https://platby.tomaj.sk/payment/eplatby-hmac
+SIGN=B06619E24483E33B56626C8FBAEFCB142A16A535DA645D35E819DF6C4A6CF26C
+```
+
+Store the order with its amount and variable symbol before you redirect: the return URL needs them. See [Starting a payment](./purchase).
+
+## 2. Verify the return
+
+VÚB sends the customer to `rurl` with `VS`, `SS`, `RES` and `SIGN` in the query string. Call `completePurchase()` with the variable symbol of the order you expect:
+
+```php
+use Omnipay\Common\Exception\InvalidRequestException;
+
+try {
+    $response = $gateway->completePurchase(['vs' => '2024000123'])->send();
+} catch (InvalidRequestException $e) {
+    // forged or tampered return, or the return of another order: do not touch the order
+    exit('Invalid return: ' . $e->getMessage());
+}
+
+if ($response->isSuccessful()) {
+    echo "Paid, VS {$response->getVs()}\n";   // mark the order paid, with the amount stored on your side
+} else {
+    echo "Not paid: {$response->getRes()}\n";  // FAIL or TOUT: offer to pay again
+}
+```
+
+<!-- snippet: output -->
+```text
+Paid, VS 2024000123
+```
 
 ::: warning The amount is not signed
-VÚB signs only the variable symbol, the specific symbol and the result of the return, not the amount. Always take the amount from your stored order, never from the request. See [Signatures](./signatures).
+VÚB signs only the variable symbol, the specific symbol and the result of the return. Take the amount from your stored order, never from the request. See [Security](./security).
 :::
 
 ## Next steps
 
+- [The payment flow](./payment-flow): what happens between the shop, the browser and the bank
 - [Configuration](./configuration): every parameter
-- [Operations](./operations): `purchase()` and `completePurchase()` in detail, error handling
-- [Signatures](./signatures): the exact signed strings
-- [Test mode](./test-mode): the simulator and VÚB's test environment
+- [Examples](../examples/): runnable recipes, including a shop and a fake bank on localhost
+- [Test mode](./test-mode): the payment simulator

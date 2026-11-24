@@ -6,66 +6,119 @@ namespace Omnipay\Eplatby\Tests;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Runs the examples that the documentation includes, so the snippets keep working.
- * Each in its own process: they send headers and set the HTTP response code.
+ * Runs every example in examples/<name>/ (the ones the documentation includes) against this checkout
+ * and compares its output with the example's expected-output.txt.
+ *
+ * The examples workflow does the same with a real `composer install` of each example; this test runs
+ * them on every PHP version of the CI matrix. Each example is copied to a temporary directory whose
+ * vendor/autoload.php loads this repository's autoloader. An example with an e2e.sh (it starts its own
+ * servers with `php -S`) runs through bash, the others with `php run.php`. `php` is the PHP running this test,
+ * with errors on stderr: the example must not write to stderr, except deprecations raised inside vendor/.
  */
-#[RunTestsInSeparateProcesses]
 #[Group('examples')]
 final class ExamplesTest extends TestCase
 {
     /**
-     * @param array<string, string> $query
+     * @return iterable<string, array{string}>
      */
-    private function runExample(string $example, array $query = []): string
+    public static function examples(): iterable
     {
-        $get = $_GET;
-        $_GET = $query;
-        ob_start();
+        $directories = glob(__DIR__ . '/../examples/*/expected-output.txt');
+        foreach ($directories === false ? [] : $directories as $file) {
+            yield basename(dirname($file)) => [dirname($file)];
+        }
+    }
+
+    public function testEveryExampleHasAnExpectedOutput(): void
+    {
+        $directories = glob(__DIR__ . '/../examples/*', GLOB_ONLYDIR);
+        self::assertNotFalse($directories);
+        $examples = array_values(array_diff(array_map(basename(...), $directories), ['ci']));
+
+        self::assertGreaterThanOrEqual(3, count($examples));
+        self::assertSame($examples, array_keys(iterator_to_array(self::examples())));
+    }
+
+    #[DataProvider('examples')]
+    public function testExampleOutput(string $directory): void
+    {
+        $work = sys_get_temp_dir() . '/omnipay-example-' . bin2hex(random_bytes(6));
+        $this->copy($directory, $work);
+        mkdir($work . '/vendor');
+        file_put_contents($work . '/vendor/autoload.php', '<?php return require ' . var_export(__DIR__ . '/../vendor/autoload.php', true) . ";\n");
+
+        // `php` for run.php and e2e.sh (and the servers it starts): this PHP, errors to stderr
+        mkdir($work . '/.bin');
+        file_put_contents($work . '/.bin/php', "#!/bin/sh\nexec " . escapeshellarg(PHP_BINARY) . " -d display_errors=stderr -d error_reporting=-1 \"\$@\"\n");
+        chmod($work . '/.bin/php', 0o755);
+
         try {
-            (static function (string $file): void {
-                require $file;
-            })(__DIR__ . '/../examples/' . $example);
+            $command = is_file($work . '/e2e.sh') ? ['bash', 'e2e.sh'] : [$work . '/.bin/php', 'run.php'];
+            $path = getenv('PATH');
+            $env = ['PATH' => $work . '/.bin' . PATH_SEPARATOR . (is_string($path) && $path !== '' ? $path : '/usr/bin:/bin')];
+            $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $work, $env);
+            self::assertIsResource($process);
+            $stdout = (string) stream_get_contents($pipes[1]);
+            $stderr = (string) stream_get_contents($pipes[2]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $status = proc_close($process);
         } finally {
-            $output = (string) ob_get_clean();
-            $_GET = $get;
+            $this->remove($work);
         }
 
-        return $output;
-    }
-
-    public function testPurchaseRendersTheSignedForm(): void
-    {
-        $output = $this->runExample('purchase.php');
-
-        self::assertStringContainsString('action="https://platby.tomaj.sk/payment/eplatby-hmac"', $output);
-        self::assertStringContainsString('name="VS" value="2024000123"', $output);
-        // HMAC-SHA256 of "12345678" . "10.00" . "2024000123" . "0308" . rurl (openssl dgst -sha256 -hmac)
-        self::assertStringContainsString('name="SIGN" value="C45FB95A0136DC2DF289920255B955FCB38CC03B777AA26D34393BF7F3926F68"', $output);
+        self::assertSame(0, $status, $stdout . $stderr);
+        self::assertSame((string) file_get_contents($directory . '/expected-output.txt'), $stdout, $stderr);
+        self::assertSame('', $this->withoutDependencyDeprecations($stderr));
     }
 
     /**
-     * @return iterable<string, array{array<string, string>, string}>
+     * Deprecations raised inside dependencies are not ours to fix (like ignoreIndirectDeprecations in
+     * phpunit.xml.dist): omnipay/common calls is_integer(), deprecated in PHP 8.6.
      */
-    public static function returns(): iterable
+    private function withoutDependencyDeprecations(string $stderr): string
     {
-        // signatures computed with openssl dgst -sha256 -hmac 1111...1
-        yield 'paid' => [['VS' => '2024000123', 'RES' => 'OK', 'SIGN' => '6ADD04387C7A8787B51C1A5E48C546F66335BCF3DF18E93735A618470609C87F'], "Order 2024000123 paid, 10.00 EUR\n"];
-        yield 'failed' => [['VS' => '2024000123', 'RES' => 'FAIL', 'SIGN' => '5FED9EBFEFE10FF3D5BFF4E32A2041F1DF8A1FD701683DCAE4846A6EFBD275D6'], "Order 2024000123 not paid: FAIL\n"];
-        yield 'tampered' => [['VS' => '2024000123', 'RES' => 'OK', 'SIGN' => '5FED9EBFEFE10FF3D5BFF4E32A2041F1DF8A1FD701683DCAE4846A6EFBD275D6'], "Invalid return: incorect signature\n"];
-        yield 'unexpected SS' => [['VS' => '2024000123', 'SS' => '1', 'RES' => 'OK', 'SIGN' => '6ADD04387C7A8787B51C1A5E48C546F66335BCF3DF18E93735A618470609C87F'], "Invalid return: incorect signature\n"];
-        yield 'unknown order' => [['VS' => '999', 'RES' => 'OK', 'SIGN' => '6ADD04387C7A8787B51C1A5E48C546F66335BCF3DF18E93735A618470609C87F'], "Unknown order\n"];
+        $lines = preg_split('~\R~', $stderr);
+        $lines = array_filter(
+            $lines === false ? [$stderr] : $lines,
+            static fn(string $line): bool => trim($line) !== '' && preg_match('~^(PHP )?Deprecated:\s.* in \S+/vendor/\S+ on line \d+$~', $line) !== 1,
+        );
+
+        return implode("\n", $lines);
     }
 
-    /**
-     * @param array<string, string> $query
-     */
-    #[DataProvider('returns')]
-    public function testReturn(array $query, string $expected): void
+    private function copy(string $from, string $to): void
     {
-        self::assertSame($expected, $this->runExample('return.php', $query));
+        mkdir($to);
+        $entries = scandir($from);
+        foreach ($entries === false ? [] : $entries as $entry) {
+            if (in_array($entry, ['.', '..', 'vendor', 'composer.lock'], true)) {
+                continue;
+            }
+            if (is_dir("{$from}/{$entry}")) {
+                $this->copy("{$from}/{$entry}", "{$to}/{$entry}");
+            } else {
+                copy("{$from}/{$entry}", "{$to}/{$entry}");
+            }
+        }
+    }
+
+    private function remove(string $path): void
+    {
+        if (is_link($path) || is_file($path)) {
+            unlink($path);
+
+            return;
+        }
+        $entries = scandir($path);
+        foreach ($entries === false ? [] : $entries as $entry) {
+            if ($entry !== '.' && $entry !== '..') {
+                $this->remove("{$path}/{$entry}");
+            }
+        }
+        rmdir($path);
     }
 }

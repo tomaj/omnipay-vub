@@ -1,0 +1,45 @@
+isRedirect:   true
+isSuccessful: false
+method:       POST
+url:          https://platby.tomaj.sk/payment/eplatby-hmac
+fields:
+  MID  = '12345678'
+  AMT  = '10.00'
+  VS   = '2024000123'
+  CS   = '0308'
+  RURL = 'https://shop.example/return'
+  SS   = NULL
+  REM  = 'customer@example.com'
+  RSMS = NULL
+  SIGN = '192E9B95242707C12828B2ABC0B483E8EB390A28A322893EC9CD1CC107E1CC90'
+
+signed string: 1234567810.0020240001230308https://shop.example/return
+openssl:       192E9B95242707C12828B2ABC0B483E8EB390A28A322893EC9CD1CC107E1CC90
+SIGN matches:  true
+
+HTML sent to the browser:
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Redirecting...</title>
+</head>
+<body onload="document.forms[0].submit();">
+    <form action="https://platby.tomaj.sk/payment/eplatby-hmac" method="post">
+        <p>Redirecting to payment page...</p>
+        <p>
+            <input type="hidden" name="MID" value="12345678" />
+<input type="hidden" name="AMT" value="10.00" />
+<input type="hidden" name="VS" value="2024000123" />
+<input type="hidden" name="CS" value="0308" />
+<input type="hidden" name="RURL" value="https://shop.example/return" />
+<input type="hidden" name="SS" value="" />
+<input type="hidden" name="REM" value="customer@example.com" />
+<input type="hidden" name="RSMS" value="" />
+<input type="hidden" name="SIGN" value="192E9B95242707C12828B2ABC0B483E8EB390A28A322893EC9CD1CC107E1CC90" />
+
+            <input type="submit" value="Continue" />
+        </p>
+    </form>
+</body>
+</html>

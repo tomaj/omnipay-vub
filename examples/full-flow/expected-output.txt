@@ -1,0 +1,16 @@
+== the customer pays order 2024000123
+shop  200 checkout form to /payment/eplatby-hmac, VS=2024000123, AMT=10.00
+bank  302 redirect to /return?VS=2024000123&RES=OK&SIGN=6ADD04387C7A8787B51C1A5E48C546F66335BCF3DF18E93735A618470609C87F
+shop  200 Thank you, order 2024000123 is paid (10.00 EUR).
+== the customer cancels order 2024000124 in the bank
+shop  200 checkout form to /payment/eplatby-hmac, VS=2024000124, AMT=24.90
+bank  302 redirect to /return?VS=2024000124&RES=FAIL&SIGN=C5AE6072BC8BB94783030548A3B3EE334CBA94936674AC90C4B8F11489404CC1
+shop  200 Order 2024000124 was not paid (FAIL). You can try again.
+== the customer changes the amount of order 2024000124
+shop  200 checkout form to /payment/eplatby-hmac, VS=2024000124, AMT=24.90
+      the customer edits AMT to 0.01 before the form is posted
+bank  400 e-platby: the payment request has an invalid signature
+== somebody opens a forged success URL for order 2024000124
+shop  400 Payment of order 2024000124 could not be verified: incorect signature
+== the orders
+shop  200 2024000123 paid, 2024000124 new

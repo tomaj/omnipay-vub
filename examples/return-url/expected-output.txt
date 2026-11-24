@@ -1,0 +1,7 @@
+cancelled by the customer:   200 not paid (FAIL), order stays new
+timed out:                   200 not paid (TOUT), order stays new
+RES changed to OK:           400 rejected: incorect signature
+return of another order:     400 rejected: Variable symbol mismatch
+return URL opened directly:  400 rejected: incorect signature
+paid:                        200 paid 10.00 EUR, VS 2024000123
+paid, page reloaded:         200 already paid

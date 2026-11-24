@@ -1,0 +1,10 @@
+<form method="post" action="http://127.0.0.1:8081/payment/eplatby-hmac" class="pay-vub">
+    <input type="hidden" name="MID" value="12345678">
+    <input type="hidden" name="AMT" value="24.90">
+    <input type="hidden" name="VS" value="2024000124">
+    <input type="hidden" name="RURL" value="https://shop.example/return">
+    <input type="hidden" name="RSMS" value="+421900123456">
+    <input type="hidden" name="SIGN" value="6B24260881D6CD71CDB2CFBA1C9EA3EC8398AB4CB9F9B7A26EB629DBC8BC814F">
+    <p>Order 2024000124: <strong>24.90 EUR</strong></p>
+    <button type="submit">Pay with VÚB e-platby</button>
+</form>

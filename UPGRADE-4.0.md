@@ -6,6 +6,7 @@
 
 The bank's return is signed over the variable symbol and the result only. 3.x accepted any correctly signed return, so the success return URL of one order also completed another. 4.0 requires the variable symbol of the order you are completing and compares it with the signed `VS`:
 
+<!-- snippet: skip -->
 ```php
 // 3.x
 $response = $gateway->completePurchase()->send();
@@ -29,6 +30,7 @@ Without `vs`, `completePurchase()->send()` throws `InvalidRequestException('The 
 
 VÚB signs the specific symbol (`SS`): the payment request is signed over `MID + AMT + VS + SS + CS + RURL` and the return over `VS + SS + RES`. Without a specific symbol nothing changes. With one, pass the same `ss` to `completePurchase()`:
 
+<!-- snippet: skip -->
 ```php
 // 3.x: SS was posted but not signed, so VÚB rejected the payment
 $gateway->purchase(['vs' => '2024000123', 'ss' => '77', 'amount' => '10.00', 'rurl' => '...'])->send();
@@ -52,6 +54,7 @@ composer require tomaj/omnipay-vub:^4.0
 
 Getters return `?string`, setters take `?string` and return `static`. Calling a setter with an `int` from a file with `declare(strict_types=1)` throws a `TypeError`; values passed through `purchase([...])` or `initialize()` are still converted.
 
+<!-- snippet: skip -->
 ```php
 // 3.x
 $request->setVs(2024000123);
@@ -66,6 +69,7 @@ $gateway->purchase(['vs' => 2024000123]);
 
 `Gateway`, `PurchaseRequest`, `PurchaseResponse`, `CompletePurchaseRequest`, `CompletePurchaseResponse` and `HmacSign` are `final` (`HmacSign` is also `readonly`). Code that extended them must wrap them instead, or use Omnipay's interfaces.
 
+<!-- snippet: skip -->
 ```php
 // 3.x
 class MyGateway extends \Omnipay\Eplatby\Gateway
@@ -94,6 +98,7 @@ final class MyPayments
 
 Every exception the package throws itself implements `Omnipay\Eplatby\Exception\EplatbyException` (which extends Omnipay's `OmnipayException`). Invalid requests and bank returns still throw Omnipay's `InvalidRequestException`.
 
+<!-- snippet: skip -->
 ```php
 // 3.x
 try {
@@ -113,6 +118,8 @@ try {
 `CompletePurchaseRequest` reads `VS`, `SS`, `RES` and `SIGN` from the Symfony request Omnipay passes to the gateway (`Request::createFromGlobals()` by default), not from `$_GET`. Plain PHP keeps working; in frameworks and long-running servers, pass the current request:
 
 ```php
+use Omnipay\Omnipay;
+
 // 3.x: worked only when $_GET was populated
 $gateway = Omnipay::create('Eplatby');
 
