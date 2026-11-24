@@ -20,16 +20,19 @@ final class CompletePurchaseRequest extends AbstractRequest
      * order by its variable symbol and take the amount from your own records.
      *
      * @return array{RES: string, VS: string, SS: string}
-     * @throws InvalidRequestException when the vs parameter is missing, the signature is invalid,
-     *                                 or the returned VS or SS is not the expected one
+     * @throws InvalidRequestException when the shared secret is empty, the vs parameter is missing (or not
+     *                                 10 digits while ss is set), the signature is invalid, or the returned
+     *                                 VS or SS is not the expected one
      */
     #[\Override]
     public function getData(): array
     {
+        $sharedSecret = ParameterGuard::sharedSecret($this->getSharedSecret());
         $expectedVs = $this->getVs();
         if ($expectedVs === null || $expectedVs === '') {
             throw new InvalidRequestException('The vs parameter is required');
         }
+        ParameterGuard::variableSymbolWithSpecificSymbol($expectedVs, $this->getSs());
 
         $vs = $this->queryString('VS');
         $ss = $this->queryString('SS');
@@ -37,7 +40,7 @@ final class CompletePurchaseRequest extends AbstractRequest
         $receivedSign = $this->queryString('SIGN');
 
         $sign = new HmacSign();
-        $expectedSign = $sign->sign($vs . $ss . $res, $this->getSharedSecret() ?? '');
+        $expectedSign = $sign->sign($vs . $ss . $res, $sharedSecret);
 
         if (!hash_equals($expectedSign, $receivedSign)) {
             throw new InvalidRequestException('incorect signature');
@@ -48,7 +51,8 @@ final class CompletePurchaseRequest extends AbstractRequest
         }
 
         // VS and SS are concatenated without a separator, so SS is pinned too: otherwise digits
-        // could move between them ("12345" + "6" signs the same as "123456" + "")
+        // could move between them ("12345" + "6" signs the same as "123456" + ""). With an SS, the
+        // expected VS has 10 digits (checked above), so another order's VS + SS cannot sign the same string
         if ($ss !== ($this->getSs() ?? '')) {
             throw new InvalidRequestException('Specific symbol mismatch');
         }

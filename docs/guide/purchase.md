@@ -14,7 +14,9 @@ Output (the [Payment form example](../examples/purchase-form)):
 
 | Exception | When |
 |---|---|
-| `InvalidRequestException('The sharedSecret parameter is required')`, `... mid ...`, `... vs ...`, `... rurl ...`, `... amount ...` | the parameter is `null` (not set and no gateway default) |
+| `InvalidRequestException('The sharedSecret parameter is required')`, `... mid ...`, `... vs ...`, `... rurl ...`, `... amount ...` | the parameter is `null` (not set and no gateway default); for `sharedSecret` also an empty or whitespace-only value, including the gateway's default `''` |
+| `InvalidRequestException('The ss parameter must be up to 10 digits')` | `ss` is set but is not 1 to 10 digits |
+| `InvalidRequestException('The vs parameter must be exactly 10 digits when ss is set')` | `ss` is set and `vs` is not exactly 10 digits ([Choosing the variable symbol](#choosing-the-variable-symbol)) |
 | `InvalidRequestException('Amount precision is too high for currency.')` | `amount` has more than two decimals |
 | `InvalidRequestException('A negative amount is not allowed.')` | `amount` is negative |
 
@@ -62,7 +64,7 @@ The variable symbol is how the return finds its order, and the bank's signature 
 
 - **unique per order** (and per payment attempt, if your accounting needs that), never reused;
 - **digits only, up to 10**, as the bank requires;
-- **of one fixed length** if you also use specific symbols, for example the order ID padded with zeros: `str_pad((string) $id, 10, '0', STR_PAD_LEFT)`. The bank signs `VS + SS` without a separator, so with a fixed length a signed `VS + SS` can only be split one way ([Security](./security#variable-and-specific-symbol)).
+- **exactly 10 digits** if you also use specific symbols, for example the order ID padded with zeros: `str_pad((string) $id, 10, '0', STR_PAD_LEFT)`. The bank signs `VS + SS` without a separator; with a full-length variable symbol a signed `VS + SS` can only be split one way. `purchase()` and `completePurchase()` throw `InvalidRequestException('The vs parameter must be exactly 10 digits when ss is set')` otherwise ([Security](./security#variable-and-specific-symbol)). Without a specific symbol any length up to 10 works, but a fixed length is still the safer choice.
 
 ## Signing a string yourself
 

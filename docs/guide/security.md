@@ -5,7 +5,7 @@ omnipay-vub signs your payment requests and verifies the bank's returns. This pa
 ## The shared secret
 
 - The `sharedSecret` signs requests and verifies returns. Anyone who has it can forge an `OK` return. Keep it in the environment or a secret store; do not commit, log or send it to the browser.
-- The gateway does not check that the secret is set (see [Configuration](./configuration#gateway-parameters)): fail when the application starts if it is missing.
+- An empty or whitespace-only secret is rejected: `purchase()` and `completePurchase()` throw `InvalidRequestException('The sharedSecret parameter is required')` instead of signing with an empty HMAC key, which anyone could reproduce. Still check the configuration when the application starts, so a missing secret fails the deployment, not the first payment.
 - The simulator's key (64 × `1`) is public. Use it only with test mode.
 
 ## What `completePurchase()` guarantees
@@ -23,10 +23,12 @@ When it returns without an exception:
 
 ## Variable and specific symbol
 
-The bank signs `VS + SS + RES` without a separator, so `VS=12345` with `SS=6` signs the same string as `VS=123456` without `SS`. `completePurchase()` compares both symbols with the ones of your order, which stops a return whose digits were moved between `VS` and `SS` from completing that order. It cannot help when your shop has two orders whose symbols run together the same way (one with `VS=123456` and no `SS`, another with `VS=12345` and `SS=6`). Avoid that by construction:
+The bank signs `VS + SS + RES` without a separator, so `VS=12345` with `SS=6` signs the same string as `VS=123456` without `SS`. The gateway closes this in two steps:
 
-- use variable symbols of **one fixed length**, for example the order ID padded to 10 digits, whenever you use specific symbols; or
-- do not use specific symbols at all.
+- `completePurchase()` compares both symbols with the ones of your order (`ss` `null` means "no `SS`"), so a return whose digits were moved between `VS` and `SS` does not complete that order;
+- with a specific symbol, `purchase()` and `completePurchase()` require a variable symbol of exactly 10 digits, the maximum VÚB allows. A signed `VS + SS` of such an order can only be split one way, and it cannot equal the `VS` of an order without a specific symbol (at most 10 digits). Pad the order ID: `str_pad((string) $id, 10, '0', STR_PAD_LEFT)`.
+
+Without specific symbols, nothing changes: every order expects an empty `SS`, so a return with one is rejected. Variable symbols of one fixed length (10 digits) are still recommended for every order.
 
 ## Test mode
 

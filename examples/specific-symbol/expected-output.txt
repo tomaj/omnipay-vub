@@ -7,3 +7,5 @@ completePurchase():
   ss not passed:               rejected: Specific symbol mismatch
   return with another SS:      rejected: Specific symbol mismatch
   digits moved from VS to SS:  rejected: Variable symbol mismatch
+
+purchase() with VS=4711: rejected: The vs parameter must be exactly 10 digits when ss is set
