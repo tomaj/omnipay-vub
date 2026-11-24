@@ -17,6 +17,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Changed
 
+* **BREAKING CHANGE**: `purchase()` requires the `amount` and throws `InvalidRequestException('The amount parameter is required')` without it, instead of signing a payment with an empty `AMT` that VÚB rejects after the redirect ([#19](https://github.com/tomaj/omnipay-vub/issues/19)).
 * **BREAKING CHANGE**: Requires PHP 8.4 or newer (no PHP constraint before; Travis tested PHP 5.6 and 7.0) ([#4](https://github.com/tomaj/omnipay-vub/pull/4), [#8](https://github.com/tomaj/omnipay-vub/issues/8)).
 * **BREAKING CHANGE**: Requires `omnipay/common` ^3.2 (was ~3.0) ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).
 * **BREAKING CHANGE**: Parameter getters and setters are typed: getters return `?string`, setters take `?string` and return `static`; `HmacSign::sign()` takes and returns `string`. Code that extends these classes must match the new signatures ([#4](https://github.com/tomaj/omnipay-vub/pull/4)).

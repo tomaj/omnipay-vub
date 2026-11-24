@@ -30,7 +30,7 @@ Getters return `null` for a parameter that is not a string or an integer (an int
 
 | Member | Returns | Description |
 |---|---|---|
-| `getData()` | `array<string, ?string>` | `MID`, `AMT`, `VS`, `CS`, `RURL`, `SS`, `REM`, `RSMS`. Throws `InvalidRequestException` when `sharedSecret`, `mid`, `vs` or `rurl` is `null`, or the amount is invalid. |
+| `getData()` | `array<string, ?string>` | `MID`, `AMT`, `VS`, `CS`, `RURL`, `SS`, `REM`, `RSMS`. Throws `InvalidRequestException` when `sharedSecret`, `mid`, `vs`, `rurl` or `amount` is `null`, or the amount is invalid. |
 | `send()` | `PurchaseResponse` | `sendData(getData())` |
 | `sendData(mixed $data)` | `PurchaseResponse` | Adds `SIGN` = HMAC-SHA256 of `MID + AMT + VS + SS + CS + RURL`. Throws `InvalidRequestException('Purchase data must be an array')`. |
 | `generateSignature(string $data)` | `string` | Uppercase hex HMAC-SHA256 of `$data` with `sharedSecret` |
