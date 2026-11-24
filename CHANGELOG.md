@@ -6,6 +6,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Added
 
+* Slovak translation of the documentation site: every page under https://tomaj.github.io/omnipay-vub/sk/, with a language menu, Slovak diagrams and a CI check that every page exists in both languages ([#22](https://github.com/tomaj/omnipay-vub/issues/22)).
 * Documentation site https://tomaj.github.io/omnipay-vub/ (VitePress): getting started, configuration, operations, signatures, test mode, API reference, FAQ; its examples live in `examples/` and run in the test suite ([#11](https://github.com/tomaj/omnipay-vub/issues/11)).
 * The documentation site at presentation level: logo, favicon set and social card, hero illustration, payment-flow diagram, pages for the payment flow, starting a payment, the return URL, error handling, testing your integration, security and upgrading from 3.x; five runnable examples in `examples/<name>/` (payment form, custom pay button, return URL, specific symbol, full redirect flow against a local fake bank) that the new `Examples` workflow and `ExamplesTest` run against the code, and every inline PHP snippet of README, UPGRADE-4.0.md and the docs runs in `DocsSnippetsTest` ([#16](https://github.com/tomaj/omnipay-vub/issues/16)).
 * `LICENSE.md` (MIT, as declared in `composer.json`), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `RELEASING.md`, issue and pull request templates; `composer.json` has `support` links and suggests an HTTP client for Omnipay ([#5](https://github.com/tomaj/omnipay-vub/issues/5)).
