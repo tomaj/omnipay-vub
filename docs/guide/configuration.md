@@ -47,7 +47,7 @@ The gateway's defaults for `mid` and `sharedSecret` are empty strings, and Omnip
 
 | Parameter | Sent as | Signed | Required | Description |
 |---|---|---|---|---|
-| `amount` | `AMT` | yes | by the bank | Amount in euro. Omnipay formats it with two decimals: `'10'`, `10` and `'10.00'` are all sent as `10.00`; more than two decimals throws `InvalidRequestException('Amount precision is too high for currency.')`, a negative amount `'A negative amount is not allowed.'`. `purchase()` does not check that it is set. |
+| `amount` | `AMT` | yes | yes | Amount in euro. Omnipay formats it with two decimals: `'10'`, `10` and `'10.00'` are all sent as `10.00`; more than two decimals throws `InvalidRequestException('Amount precision is too high for currency.')`, a negative amount `'A negative amount is not allowed.'`. |
 | `vs` | `VS` | yes | yes | Variable symbol: identifies the order, digits only, up to 10. Use a value unique per order. |
 | `ss` | `SS` | yes | no | Specific symbol, digits only, up to 10. If you send one, pass the same value to `completePurchase()`. |
 | `cs` | `CS` | yes | no | Constant symbol, up to 4 digits (for example `0308`). |
@@ -56,7 +56,7 @@ The gateway's defaults for `mid` and `sharedSecret` are empty strings, and Omnip
 | `rsms` | `RSMS` | no | no | Mobile phone number for an SMS notification from the bank. |
 | `mid`, `sharedSecret`, `testMode`, `testHost` | | | | Inherited from the gateway, can be overridden per request. |
 
-`purchase()` throws `InvalidRequestException('The vs parameter is required')` (or `rurl`, `mid`, `sharedSecret`) when one of them is `null`. VÚB rejects a constant or specific symbol made only of zeros (`0`, `0000`) in production; the simulator accepts it, so leave the parameter out instead of sending zeros.
+`purchase()` throws `InvalidRequestException('The vs parameter is required')` (or `rurl`, `amount`, `mid`, `sharedSecret`) when one of them is `null`. VÚB rejects a constant or specific symbol made only of zeros (`0`, `0000`) in production; the simulator accepts it, so leave the parameter out instead of sending zeros.
 
 The currency is not a parameter: e-platby pays in euro. Omnipay's generic request parameters (`currency`, `description`, `transactionId`, `returnUrl`, ...) are accepted but not sent to the bank; use `rurl` for the return URL.
 

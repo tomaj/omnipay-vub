@@ -165,6 +165,7 @@ final class PurchaseRequestTest extends TestCase
         yield ['mid'];
         yield ['vs'];
         yield ['rurl'];
+        yield ['amount'];
     }
 
     #[DataProvider('requiredParameters')]

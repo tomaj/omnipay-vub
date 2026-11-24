@@ -6,7 +6,7 @@ The gateway reports problems with exceptions; a payment that did not go through 
 
 | Exception | Thrown by | When |
 |---|---|---|
-| `Omnipay\Common\Exception\InvalidRequestException` | `purchase()->send()`, `getData()` | a required parameter is `null` (`The vs parameter is required`, `... rurl ...`, `... mid ...`, `... sharedSecret ...`), an invalid amount (`Amount precision is too high for currency.`, `A negative amount is not allowed.`), `sendData()` called with something else than an array (`Purchase data must be an array`) |
+| `Omnipay\Common\Exception\InvalidRequestException` | `purchase()->send()`, `getData()` | a required parameter is `null` (`The vs parameter is required`, `... rurl ...`, `... amount ...`, `... mid ...`, `... sharedSecret ...`), an invalid amount (`Amount precision is too high for currency.`, `A negative amount is not allowed.`), `sendData()` called with something else than an array (`Purchase data must be an array`) |
 | `Omnipay\Common\Exception\InvalidRequestException` | `completePurchase()->send()`, `getData()` | `The vs parameter is required`, `incorect signature`, `Variable symbol mismatch`, `Specific symbol mismatch` ([the checks](./complete-purchase#the-checks)) |
 | `Omnipay\Eplatby\Exception\LogicException` | `PurchaseResponse::getRedirectUrl()` | the response was created for another request than a `PurchaseRequest` (a programming error) |
 | `Omnipay\Common\Exception\RuntimeException` | Omnipay, `initialize()` and setters | the request was changed after `send()` (`Request cannot be modified after it has been sent!`) |
@@ -42,4 +42,4 @@ Every `InvalidRequestException` from `completePurchase()` means the same thing f
 
 ## In the checkout
 
-Exceptions from `purchase()` are configuration or programming errors: a missing return URL or variable symbol, an amount with three decimals. Let them reach your error handler, or validate the order before you call the gateway.
+Exceptions from `purchase()` are configuration or programming errors: a missing return URL, amount or variable symbol, an amount with three decimals. Let them reach your error handler, or validate the order before you call the gateway.

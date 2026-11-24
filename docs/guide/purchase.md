@@ -14,7 +14,7 @@ Output (the [Payment form example](../examples/purchase-form)):
 
 | Exception | When |
 |---|---|
-| `InvalidRequestException('The sharedSecret parameter is required')`, `... mid ...`, `... vs ...`, `... rurl ...` | the parameter is `null` (not set and no gateway default) |
+| `InvalidRequestException('The sharedSecret parameter is required')`, `... mid ...`, `... vs ...`, `... rurl ...`, `... amount ...` | the parameter is `null` (not set and no gateway default) |
 | `InvalidRequestException('Amount precision is too high for currency.')` | `amount` has more than two decimals |
 | `InvalidRequestException('A negative amount is not allowed.')` | `amount` is negative |
 

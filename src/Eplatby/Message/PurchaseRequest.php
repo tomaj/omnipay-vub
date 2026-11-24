@@ -19,7 +19,7 @@ final class PurchaseRequest extends AbstractRequest
     #[\Override]
     public function getData(): array
     {
-        $this->validate('sharedSecret', 'mid', 'vs', 'rurl');
+        $this->validate('sharedSecret', 'mid', 'vs', 'rurl', 'amount');
         $data = [];
 
         $data['MID'] = $this->getMid();
