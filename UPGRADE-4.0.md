@@ -42,6 +42,32 @@ $gateway->completePurchase(['vs' => '2024000123', 'ss' => '77'])->send();
 // throws InvalidRequestException('Specific symbol mismatch') when the returned SS is another one
 ```
 
+With a specific symbol, the variable symbol must have exactly 10 digits, and `ss` 1 to 10 digits. VÚB signs `VS + SS` without a separator, and only a full-length variable symbol makes the signed string unambiguous. Pad the order ID with zeros, store that value with the order and pass it to both calls:
+
+<!-- snippet: skip -->
+```php
+// throws InvalidRequestException('The vs parameter must be exactly 10 digits when ss is set')
+$gateway->purchase(['vs' => '123', 'ss' => '77', 'amount' => '10.00', 'rurl' => '...'])->send();
+
+// 4.0
+$vs = str_pad((string) $order->id, 10, '0', STR_PAD_LEFT); // '0000000123'
+$gateway->purchase(['vs' => $vs, 'ss' => '77', 'amount' => '10.00', 'rurl' => '...'])->send();
+$gateway->completePurchase(['vs' => $vs, 'ss' => '77'])->send();
+```
+
+## An empty shared secret is rejected
+
+3.x signed with whatever `sharedSecret` was set, including the gateway's default `''`: a deployment with a missing environment variable signed payments and accepted returns with an empty HMAC key, which anyone can compute. 4.0 throws `InvalidRequestException('The sharedSecret parameter is required')` from `purchase()` and `completePurchase()` when the secret is `null`, empty or only whitespace:
+
+<!-- snippet: skip -->
+```php
+// 3.x: signed with an empty key when VUB_SHARED_SECRET was not set
+$gateway->setSharedSecret((string) getenv('VUB_SHARED_SECRET'));
+
+// 4.0: the gateway throws on the first payment; better fail when the application starts
+$gateway->setSharedSecret(getenv('VUB_SHARED_SECRET') ?: throw new RuntimeException('VUB_SHARED_SECRET is not set'));
+```
+
 ## PHP 8.4 and omnipay/common 3.2
 
 `composer.json` requires `"php": "^8.4"` and `"omnipay/common": "^3.2"`. Upgrade PHP first, then:

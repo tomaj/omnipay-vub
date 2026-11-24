@@ -20,6 +20,14 @@ The message is spelled `incorect` in the code; match on the exception class, not
 
 You sent `ss` in `purchase()` but not in `completePurchase()`, or the other way round. Pass the same value to both.
 
+## "The sharedSecret parameter is required"
+
+The secret is `null`, empty or only whitespace, usually because an environment variable is missing in this deployment. Since 4.0 the gateway refuses to sign or verify with an empty key, which anyone could reproduce. Set the secret from VÚB (or the simulator's key in test mode).
+
+## "The vs parameter must be exactly 10 digits when ss is set"
+
+With a specific symbol the variable symbol must have the full 10 digits, because VÚB signs `VS + SS` without a separator. Pad the order ID with zeros, `str_pad((string) $id, 10, '0', STR_PAD_LEFT)`, store that value with the order, and pass the same value to `purchase()` and `completePurchase()`. See [Security](./guide/security#variable-and-specific-symbol).
+
 ## VÚB rejects the payment with symbols full of zeros
 
 VÚB production does not accept a constant or specific symbol made only of zeros. Leave the parameter out instead.

@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 // A payment with a specific symbol (SS): it is part of both signatures, so pass the same ss to
-// purchase() and completePurchase(). Variable symbols are zero-padded to one fixed length (10 digits),
-// so VS + SS, which the bank signs without a separator, can only be split one way.
+// purchase() and completePurchase(). With a specific symbol the variable symbol must have 10 digits (pad the
+// order ID with zeros), so VS + SS, which the bank signs without a separator, can only be split one way.
 
 use Omnipay\Common\Exception\InvalidRequestException;
 use Omnipay\Eplatby\Gateway;
@@ -68,3 +68,10 @@ printf("  %-28s %s\n", 'ss not passed:', $complete($bankReturn($order['vs'], $or
 printf("  %-28s %s\n", 'return with another SS:', $complete($bankReturn($order['vs'], '2025', 'OK'), $order['vs'], $order['ss']));
 // a digit moved from VS to SS signs the same string, but the symbols are not this order's
 printf("  %-28s %s\n", 'digits moved from VS to SS:', $complete(['VS' => '000000471', 'SS' => '12024'] + $bankReturn($order['vs'], $order['ss'], 'OK'), $order['vs'], $order['ss']));
+
+// with a specific symbol, the gateway requires a 10-digit variable symbol
+try {
+    $gateway->purchase(['amount' => $order['amount'], 'vs' => (string) $orderId, 'ss' => $order['ss'], 'rurl' => 'https://shop.example/return'])->send();
+} catch (InvalidRequestException $e) {
+    echo "\npurchase() with VS={$orderId}: rejected: {$e->getMessage()}\n";
+}

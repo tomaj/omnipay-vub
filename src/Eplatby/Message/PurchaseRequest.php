@@ -15,11 +15,15 @@ final class PurchaseRequest extends AbstractRequest
 
     /**
      * @return array<string, ?string>
+     * @throws InvalidRequestException when a required parameter is missing, the shared secret is empty,
+     *                                 or a specific symbol is set and the variable symbol is not 10 digits
      */
     #[\Override]
     public function getData(): array
     {
         $this->validate('sharedSecret', 'mid', 'vs', 'rurl', 'amount');
+        ParameterGuard::sharedSecret($this->getSharedSecret());
+        ParameterGuard::variableSymbolWithSpecificSymbol($this->getVs() ?? '', $this->getSs());
         $data = [];
 
         $data['MID'] = $this->getMid();
@@ -34,10 +38,13 @@ final class PurchaseRequest extends AbstractRequest
         return $data;
     }
 
+    /**
+     * @throws InvalidRequestException when the shared secret is missing, empty or only whitespace
+     */
     public function generateSignature(string $data): string
     {
         $sign = new HmacSign();
-        return $sign->sign($data, $this->getSharedSecret() ?? '');
+        return $sign->sign($data, ParameterGuard::sharedSecret($this->getSharedSecret()));
     }
 
     #[\Override]

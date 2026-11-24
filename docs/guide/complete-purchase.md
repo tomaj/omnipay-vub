@@ -25,12 +25,14 @@ https://shop.example/return?VS=2024000123&RES=OK&SIGN=6ADD04387C7A8787B51C1A5E48
 
 | # | Check | Message |
 |---|---|---|
-| 1 | `vs` was passed and is not empty | `The vs parameter is required` |
-| 2 | `SIGN` equals the HMAC-SHA256 of `VS + SS + RES` (compared with `hash_equals()`) | `incorect signature` (sic) |
-| 3 | the returned `VS` is exactly the expected `vs` | `Variable symbol mismatch` |
-| 4 | the returned `SS` is exactly the expected `ss` (`''` when `ss` is `null`) | `Specific symbol mismatch` |
+| 1 | `sharedSecret` is set and not empty or only whitespace | `The sharedSecret parameter is required` |
+| 2 | `vs` was passed and is not empty | `The vs parameter is required` |
+| 3 | when `ss` is passed (not `null` or `''`): `ss` has up to 10 digits and `vs` exactly 10 digits | `The ss parameter must be up to 10 digits`, `The vs parameter must be exactly 10 digits when ss is set` |
+| 4 | `SIGN` equals the HMAC-SHA256 of `VS + SS + RES` (compared with `hash_equals()`) | `incorect signature` (sic) |
+| 5 | the returned `VS` is exactly the expected `vs` | `Variable symbol mismatch` |
+| 6 | the returned `SS` is exactly the expected `ss` (`''` when `ss` is `null`) | `Specific symbol mismatch` |
 
-A missing query parameter (or one that is not a string, like `RES[]=OK`) is read as `''`, so a request without `SIGN` fails check 2. The signature check runs before the symbol checks: a return with a wrong signature always reports `incorect signature`.
+Checks 1 to 3 are about your configuration and your order, not about the return: they fail for every return of that order. A missing query parameter (or one that is not a string, like `RES[]=OK`) is read as `''`, so a request without `SIGN` fails check 4. The signature check runs before the symbol checks: a return with a wrong signature always reports `incorect signature`.
 
 ## The response
 

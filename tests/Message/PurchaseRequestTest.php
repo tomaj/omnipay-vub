@@ -6,6 +6,7 @@ namespace Omnipay\Eplatby\Tests\Message;
 
 use Omnipay\Common\Exception\InvalidRequestException;
 use Omnipay\Common\Http\ClientInterface;
+use Omnipay\Eplatby\Gateway;
 use Omnipay\Eplatby\Message\PurchaseRequest;
 use Omnipay\Eplatby\Message\PurchaseResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -41,7 +42,7 @@ final class PurchaseRequestTest extends TestCase
     {
         $data = $this->request([
             'amount' => '10.00',
-            'vs' => '123456',
+            'vs' => '0000123456',
             'cs' => '0321',
             'ss' => '77',
             'rem' => 'merchant@example.sk',
@@ -52,7 +53,7 @@ final class PurchaseRequestTest extends TestCase
         self::assertSame([
             'MID' => '11111111',
             'AMT' => '10.00',
-            'VS' => '123456',
+            'VS' => '0000123456',
             'CS' => '0321',
             'RURL' => 'http://localhost:4444/testserver.php',
             'SS' => '77',
@@ -65,7 +66,7 @@ final class PurchaseRequestTest extends TestCase
     {
         $response = $this->send([
             'amount' => '10.00',
-            'vs' => '123456',
+            'vs' => '0000123456',
             'cs' => '0321',
             'ss' => '77',
             'rurl' => 'http://localhost:4444/testserver.php',
@@ -76,8 +77,8 @@ final class PurchaseRequestTest extends TestCase
         self::assertSame('POST', $response->getRedirectMethod());
 
         $data = $response->getRedirectData();
-        // HMAC-SHA256 of "11111111" . "10.00" . "123456" . "77" . "0321" . rurl, verified with the openssl CLI
-        self::assertSame('CF8266A0FFC44C09EC9CDB0D91999298A511BD40B595798DD02DDF2CC86AA7C4', $data['SIGN']);
+        // HMAC-SHA256 of "11111111" . "10.00" . "0000123456" . "77" . "0321" . rurl, verified with the openssl CLI
+        self::assertSame('79F26AFA0F37FE430D16DED09C2F69CC228BD7C14B74F528D647EA2B803061FE', $data['SIGN']);
         self::assertSame('77', $data['SS']);
     }
 
@@ -177,6 +178,93 @@ final class PurchaseRequestTest extends TestCase
         $this->expectExceptionMessageIs("The {$parameter} parameter is required");
 
         $this->request($parameters)->getData();
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function emptySecrets(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'spaces' => ['   '];
+        yield 'newline' => ["\n"];
+    }
+
+    #[DataProvider('emptySecrets')]
+    public function testEmptySharedSecretThrows(string $secret): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('The sharedSecret parameter is required');
+
+        $this->request(['amount' => '1.00', 'vs' => '1', 'rurl' => 'http://x', 'sharedSecret' => $secret])->getData();
+    }
+
+    #[DataProvider('emptySecrets')]
+    public function testEmptySharedSecretIsNotUsedForSigning(string $secret): void
+    {
+        $request = $this->request(['sharedSecret' => $secret]);
+
+        try {
+            $request->generateSignature('data');
+            self::fail('generateSignature() signed with an empty secret');
+        } catch (InvalidRequestException $e) {
+            self::assertSame('The sharedSecret parameter is required', $e->getMessage());
+        }
+
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('The sharedSecret parameter is required');
+
+        $request->sendData(['MID' => '11111111']);
+    }
+
+    public function testDefaultSharedSecretOfTheGatewayIsRejected(): void
+    {
+        $gateway = new Gateway(self::createStub(ClientInterface::class), new HttpRequest());
+        $gateway->setMid('11111111');
+
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('The sharedSecret parameter is required');
+
+        $gateway->purchase(['amount' => '1.00', 'vs' => '1', 'rurl' => 'http://x'])->send();
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function invalidSymbols(): iterable
+    {
+        $vsLength = 'The vs parameter must be exactly 10 digits when ss is set';
+        yield 'short vs with ss' => ['123456', '77', $vsLength];
+        yield '11 digit vs with ss' => ['00001234567', '77', $vsLength];
+        yield 'vs with a space' => ['000012345 ', '77', $vsLength];
+        yield 'vs with a newline' => ["0000123456\n", '77', $vsLength];
+        yield 'non-digit vs' => ['00001234a6', '77', $vsLength];
+        yield 'non-digit ss' => ['0000123456', '7a', 'The ss parameter must be up to 10 digits'];
+        yield '11 digit ss' => ['0000123456', '12345678901', 'The ss parameter must be up to 10 digits'];
+        yield 'ss with a newline' => ['0000123456', "77\n", 'The ss parameter must be up to 10 digits'];
+        yield 'ss with a leading letter' => ['0000123456', 'a77', 'The ss parameter must be up to 10 digits'];
+        yield 'vs with a leading letter' => ['x0000123456', '77', $vsLength];
+    }
+
+    #[DataProvider('invalidSymbols')]
+    public function testSpecificSymbolRequiresTenDigitVariableSymbol(string $vs, string $ss, string $message): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs($message);
+
+        $this->request(['amount' => '1.00', 'vs' => $vs, 'ss' => $ss, 'rurl' => 'http://x'])->getData();
+    }
+
+    public function testVariableSymbolOfAnyLengthWithoutSpecificSymbol(): void
+    {
+        foreach ([null, ''] as $ss) {
+            $data = $this->request(['amount' => '1.00', 'vs' => '1', 'ss' => $ss, 'rurl' => 'http://x'])->getData();
+            self::assertSame('1', $data['VS']);
+        }
+        $data = $this->request(['amount' => '1.00', 'vs' => '9999999999', 'ss' => '1234567890', 'rurl' => 'http://x'])->getData();
+        self::assertSame('1234567890', $data['SS']);
+        $data = $this->request(['amount' => '1.00', 'vs' => '0000000001', 'ss' => '7', 'rurl' => 'http://x'])->getData();
+        self::assertSame('7', $data['SS']);
     }
 
     public function testAccessors(): void

@@ -6,8 +6,8 @@ The gateway reports problems with exceptions; a payment that did not go through 
 
 | Exception | Thrown by | When |
 |---|---|---|
-| `Omnipay\Common\Exception\InvalidRequestException` | `purchase()->send()`, `getData()` | a required parameter is `null` (`The vs parameter is required`, `... rurl ...`, `... amount ...`, `... mid ...`, `... sharedSecret ...`), an invalid amount (`Amount precision is too high for currency.`, `A negative amount is not allowed.`), `sendData()` called with something else than an array (`Purchase data must be an array`) |
-| `Omnipay\Common\Exception\InvalidRequestException` | `completePurchase()->send()`, `getData()` | `The vs parameter is required`, `incorect signature`, `Variable symbol mismatch`, `Specific symbol mismatch` ([the checks](./complete-purchase#the-checks)) |
+| `Omnipay\Common\Exception\InvalidRequestException` | `purchase()->send()`, `getData()` | a required parameter is `null` (`The vs parameter is required`, `... rurl ...`, `... amount ...`, `... mid ...`, `... sharedSecret ...`; the shared secret also when it is empty), an `ss` without a 10-digit `vs` (`The vs parameter must be exactly 10 digits when ss is set`, `The ss parameter must be up to 10 digits`), an invalid amount (`Amount precision is too high for currency.`, `A negative amount is not allowed.`), `sendData()` called with something else than an array (`Purchase data must be an array`) |
+| `Omnipay\Common\Exception\InvalidRequestException` | `completePurchase()->send()`, `getData()` | `The sharedSecret parameter is required`, `The vs parameter is required`, the two symbol-format messages, `incorect signature`, `Variable symbol mismatch`, `Specific symbol mismatch` ([the checks](./complete-purchase#the-checks)) |
 | `Omnipay\Eplatby\Exception\LogicException` | `PurchaseResponse::getRedirectUrl()` | the response was created for another request than a `PurchaseRequest` (a programming error) |
 | `Omnipay\Common\Exception\RuntimeException` | Omnipay, `initialize()` and setters | the request was changed after `send()` (`Request cannot be modified after it has been sent!`) |
 
