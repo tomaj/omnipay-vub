@@ -7,8 +7,8 @@ A shop and a fake VÚB e-platby endpoint, each on PHP's built-in server, and a s
 ```text
 examples/full-flow/
 ├── shop/index.php    the shop: /checkout, /return, /orders
-├── bank/index.php    the fake bank: checks SIGN, redirects back with a signed result
-├── browser.php       the customer: GET the checkout, POST the form, follow the redirect
+├── bank/index.php    the fake bank: checks SIGN, redirects back signed
+├── browser.php       the customer: checkout, form post, redirect
 └── e2e.sh            starts both servers and runs the scenarios
 ```
 
