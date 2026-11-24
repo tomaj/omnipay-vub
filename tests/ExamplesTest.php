@@ -50,9 +50,9 @@ final class ExamplesTest extends TestCase
         mkdir($work . '/vendor');
         file_put_contents($work . '/vendor/autoload.php', '<?php return require ' . var_export(__DIR__ . '/../vendor/autoload.php', true) . ";\n");
 
-        // `php` for run.php and e2e.sh (and the servers it starts): this PHP, errors to stderr
+        // `php` for run.php and e2e.sh (and the servers it starts): this PHP, errors logged to stderr, never into the output
         mkdir($work . '/.bin');
-        file_put_contents($work . '/.bin/php', "#!/bin/sh\nexec " . escapeshellarg(PHP_BINARY) . " -d display_errors=stderr -d error_reporting=-1 \"\$@\"\n");
+        file_put_contents($work . '/.bin/php', "#!/bin/sh\nexec " . escapeshellarg(PHP_BINARY) . " -d display_errors=0 -d log_errors=1 -d error_reporting=-1 \"\$@\"\n");
         chmod($work . '/.bin/php', 0o755);
 
         try {
