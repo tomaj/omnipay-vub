@@ -1,10 +1,12 @@
+<p align="center"><a href="https://tomaj.github.io/omnipay-vub/"><img src="docs/public/logo.svg" width="96" height="96" alt="omnipay-vub"></a></p>
+
 # Omnipay VÚB e-platby
 
 **VÚB e-platby (VÚB banka, Slovakia) gateway for the [Omnipay](https://omnipay.thephpleague.com/) payment processing library**
 
 **Documentation: https://tomaj.github.io/omnipay-vub/**
 
-[Getting started](https://tomaj.github.io/omnipay-vub/guide/getting-started) · [Operations](https://tomaj.github.io/omnipay-vub/guide/operations) · [API reference](https://tomaj.github.io/omnipay-vub/api/reference) · [Changelog](https://tomaj.github.io/omnipay-vub/changelog)
+[Getting started](https://tomaj.github.io/omnipay-vub/guide/getting-started) · [Payment flow](https://tomaj.github.io/omnipay-vub/guide/payment-flow) · [Examples](https://tomaj.github.io/omnipay-vub/examples/) · [API reference](https://tomaj.github.io/omnipay-vub/api/reference) · [Changelog](https://tomaj.github.io/omnipay-vub/changelog)
 
 [![Latest Stable Version](https://img.shields.io/packagist/v/tomaj/omnipay-vub.svg)](https://packagist.org/packages/tomaj/omnipay-vub)
 [![CI](https://github.com/tomaj/omnipay-vub/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/tomaj/omnipay-vub/actions/workflows/ci.yml?query=branch%3Amaster)
@@ -54,14 +56,14 @@ $response->redirect(); // auto-submitting POST form to VÚB e-platby
 On the return URL, verify the bank's answer against the order you expect:
 
 ```php
-$response = $gateway->completePurchase(['vs' => $order->variableSymbol])->send();
+$response = $gateway->completePurchase(['vs' => $order->vs])->send();
 
 if ($response->isSuccessful()) {
     // paid: the amount is not part of the bank's signature, use the amount stored with the order
 }
 ```
 
-The [documentation](https://tomaj.github.io/omnipay-vub/) covers every parameter, the signed strings, test mode and error handling.
+The [documentation](https://tomaj.github.io/omnipay-vub/) covers every parameter, the signed strings, test mode, error handling and testing. The [examples](https://tomaj.github.io/omnipay-vub/examples/) in [`examples/`](examples) run in CI, from the payment form to a shop and a fake bank on localhost.
 
 ## Contributing
 
