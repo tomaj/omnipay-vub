@@ -99,7 +99,7 @@ Gettery vrátia `null`, keď dáta pod daným kľúčom nemajú reťazec (to sa 
 
 | Metóda | Vráti | Popis |
 |---|---|---|
-| `sign(string $input, string $secret)` | `string` | `strtoupper(hash_hmac('sha256', $input, $secret))` |
+| `sign(string $input, #[\SensitiveParameter] string $secret)` | `string` | `strtoupper(hash_hmac('sha256', $input, $secret))` |
 
 ## Výnimky {#exceptions}
 
