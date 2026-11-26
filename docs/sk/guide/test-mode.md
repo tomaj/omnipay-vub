@@ -1,6 +1,6 @@
 # Testovací režim
 
-So zapnutým `testMode` odošle `purchase()` formulár na simulátor platieb namiesto do VÚB. Nič iné sa nemení: podpisy, návrat aj `completePurchase()` fungujú rovnako.
+So zapnutým `testMode` odošle `purchase()` formulár na simulátor platieb namiesto do VÚB a prijme aj návratovú URL (`rurl`) s obyčajným `http://`, pre e-shop bežiaci na `localhost`; produkcia vyžaduje `https://`. Nič iné sa nemení: podpisy, návrat aj `completePurchase()` fungujú rovnako.
 
 | Režim | `getRedirectUrl()` |
 |---|---|

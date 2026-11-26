@@ -1,6 +1,6 @@
 # Test mode
 
-With `testMode` on, `purchase()` posts the form to a payment simulator instead of VÚB. Nothing else changes: the signatures, the return and `completePurchase()` work the same.
+With `testMode` on, `purchase()` posts the form to a payment simulator instead of VÚB, and accepts a plain `http://` return URL (`rurl`), for a shop running on `localhost`; production requires `https://`. Nothing else changes: the signatures, the return and `completePurchase()` work the same.
 
 | Mode | `getRedirectUrl()` |
 |---|---|

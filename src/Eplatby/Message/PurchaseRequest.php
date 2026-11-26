@@ -16,14 +16,19 @@ final class PurchaseRequest extends AbstractRequest
     /**
      * @return array<string, ?string>
      * @throws InvalidRequestException when a required parameter is missing, the shared secret is empty,
-     *                                 or a specific symbol is set and the variable symbol is not 10 digits
+     *                                 a payment symbol or the return URL has an invalid format, or a specific
+     *                                 symbol is set and the variable symbol is not 10 digits
      */
     #[\Override]
     public function getData(): array
     {
         $this->validate('sharedSecret', 'mid', 'vs', 'rurl', 'amount');
         ParameterGuard::sharedSecret($this->getSharedSecret());
-        ParameterGuard::variableSymbolWithSpecificSymbol($this->getVs() ?? '', $this->getSs());
+        $vs = $this->getVs() ?? '';
+        ParameterGuard::variableSymbol($vs);
+        ParameterGuard::constantSymbol($this->getCs());
+        ParameterGuard::variableSymbolWithSpecificSymbol($vs, $this->getSs());
+        ParameterGuard::returnUrl($this->getRurl() ?? '', $this->getTestMode() === true);
         $data = [];
 
         $data['MID'] = $this->getMid();

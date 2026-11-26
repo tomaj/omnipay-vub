@@ -48,6 +48,7 @@ final class PurchaseRequestTest extends TestCase
             'rem' => 'merchant@example.sk',
             'rsms' => '0900123456',
             'rurl' => 'http://localhost:4444/testserver.php',
+            'testMode' => true, // plain http is accepted in test mode only
         ])->getData();
 
         self::assertSame([
@@ -70,6 +71,7 @@ final class PurchaseRequestTest extends TestCase
             'cs' => '0321',
             'ss' => '77',
             'rurl' => 'http://localhost:4444/testserver.php',
+            'testMode' => true, // plain http is accepted in test mode only
         ]);
 
         self::assertFalse($response->isSuccessful());
@@ -91,6 +93,7 @@ final class PurchaseRequestTest extends TestCase
                 'cs' => '0321',
                 'ss' => $ss,
                 'rurl' => 'http://localhost:4444/testserver.php',
+                'testMode' => true, // plain http is accepted in test mode only
             ])->getRedirectData();
 
             // HMAC-SHA256 of "11111111" . "10.00" . "123456" . "0321" . rurl, verified with the openssl CLI
@@ -118,6 +121,7 @@ final class PurchaseRequestTest extends TestCase
             'vs' => 123456,
             'cs' => '0321',
             'rurl' => 'http://localhost:4444/testserver.php',
+            'testMode' => true, // plain http is accepted in test mode only
         ])->getRedirectData();
 
         self::assertSame('123456', $data['VS']);
@@ -151,7 +155,7 @@ final class PurchaseRequestTest extends TestCase
             'testHost' => 'https://custom.example',
             'amount' => '1.00',
             'vs' => '1',
-            'rurl' => 'http://x',
+            'rurl' => 'https://shop.example/return',
         ]);
 
         self::assertSame('https://custom.example/payment/eplatby-hmac', $response->getRedirectUrl());
@@ -172,7 +176,7 @@ final class PurchaseRequestTest extends TestCase
     #[DataProvider('requiredParameters')]
     public function testRequiredParameter(string $parameter): void
     {
-        $parameters = ['amount' => '1.00', 'vs' => '1', 'rurl' => 'http://x', $parameter => null];
+        $parameters = ['amount' => '1.00', 'vs' => '1', 'rurl' => 'https://shop.example/return', $parameter => null];
 
         $this->expectException(InvalidRequestException::class);
         $this->expectExceptionMessageIs("The {$parameter} parameter is required");
@@ -196,7 +200,7 @@ final class PurchaseRequestTest extends TestCase
         $this->expectException(InvalidRequestException::class);
         $this->expectExceptionMessageIs('The sharedSecret parameter is required');
 
-        $this->request(['amount' => '1.00', 'vs' => '1', 'rurl' => 'http://x', 'sharedSecret' => $secret])->getData();
+        $this->request(['amount' => '1.00', 'vs' => '1', 'rurl' => 'https://shop.example/return', 'sharedSecret' => $secret])->getData();
     }
 
     #[DataProvider('emptySecrets')]
@@ -225,7 +229,7 @@ final class PurchaseRequestTest extends TestCase
         $this->expectException(InvalidRequestException::class);
         $this->expectExceptionMessageIs('The sharedSecret parameter is required');
 
-        $gateway->purchase(['amount' => '1.00', 'vs' => '1', 'rurl' => 'http://x'])->send();
+        $gateway->purchase(['amount' => '1.00', 'vs' => '1', 'rurl' => 'https://shop.example/return'])->send();
     }
 
     /**
@@ -234,16 +238,19 @@ final class PurchaseRequestTest extends TestCase
     public static function invalidSymbols(): iterable
     {
         $vsLength = 'The vs parameter must be exactly 10 digits when ss is set';
+        // a malformed vs is rejected by the format check before the 10-digit rule for ss
+        $vsFormat = 'The vs parameter must be up to 10 digits';
         yield 'short vs with ss' => ['123456', '77', $vsLength];
-        yield '11 digit vs with ss' => ['00001234567', '77', $vsLength];
-        yield 'vs with a space' => ['000012345 ', '77', $vsLength];
-        yield 'vs with a newline' => ["0000123456\n", '77', $vsLength];
-        yield 'non-digit vs' => ['00001234a6', '77', $vsLength];
+        yield '9 digit vs with ss' => ['000123456', '77', $vsLength];
+        yield '11 digit vs with ss' => ['00001234567', '77', $vsFormat];
+        yield 'vs with a space' => ['000012345 ', '77', $vsFormat];
+        yield 'vs with a newline' => ["0000123456\n", '77', $vsFormat];
+        yield 'non-digit vs' => ['00001234a6', '77', $vsFormat];
         yield 'non-digit ss' => ['0000123456', '7a', 'The ss parameter must be up to 10 digits'];
         yield '11 digit ss' => ['0000123456', '12345678901', 'The ss parameter must be up to 10 digits'];
         yield 'ss with a newline' => ['0000123456', "77\n", 'The ss parameter must be up to 10 digits'];
         yield 'ss with a leading letter' => ['0000123456', 'a77', 'The ss parameter must be up to 10 digits'];
-        yield 'vs with a leading letter' => ['x0000123456', '77', $vsLength];
+        yield 'vs with a leading letter' => ['x0000123456', '77', $vsFormat];
     }
 
     #[DataProvider('invalidSymbols')]
@@ -252,19 +259,180 @@ final class PurchaseRequestTest extends TestCase
         $this->expectException(InvalidRequestException::class);
         $this->expectExceptionMessageIs($message);
 
-        $this->request(['amount' => '1.00', 'vs' => $vs, 'ss' => $ss, 'rurl' => 'http://x'])->getData();
+        $this->request(['amount' => '1.00', 'vs' => $vs, 'ss' => $ss, 'rurl' => 'https://shop.example/return'])->getData();
     }
 
     public function testVariableSymbolOfAnyLengthWithoutSpecificSymbol(): void
     {
         foreach ([null, ''] as $ss) {
-            $data = $this->request(['amount' => '1.00', 'vs' => '1', 'ss' => $ss, 'rurl' => 'http://x'])->getData();
+            $data = $this->request(['amount' => '1.00', 'vs' => '1', 'ss' => $ss, 'rurl' => 'https://shop.example/return'])->getData();
             self::assertSame('1', $data['VS']);
         }
-        $data = $this->request(['amount' => '1.00', 'vs' => '9999999999', 'ss' => '1234567890', 'rurl' => 'http://x'])->getData();
+        $data = $this->request(['amount' => '1.00', 'vs' => '9999999999', 'ss' => '1234567890', 'rurl' => 'https://shop.example/return'])->getData();
         self::assertSame('1234567890', $data['SS']);
-        $data = $this->request(['amount' => '1.00', 'vs' => '0000000001', 'ss' => '7', 'rurl' => 'http://x'])->getData();
+        $data = $this->request(['amount' => '1.00', 'vs' => '0000000001', 'ss' => '7', 'rurl' => 'https://shop.example/return'])->getData();
         self::assertSame('7', $data['SS']);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function invalidVariableSymbols(): iterable
+    {
+        yield 'empty' => [''];
+        yield '11 digits' => ['12345678901'];
+        yield 'letters' => ['abc'];
+        yield 'letter and digits' => ['2024a00123'];
+        yield 'inner space' => ['12 34'];
+        yield 'leading space' => [' 1234'];
+        yield 'trailing newline' => ["1234\n"];
+        yield 'negative' => ['-1'];
+        yield 'plus sign' => ['+1'];
+        yield 'decimal' => ['1.5'];
+        yield 'hex' => ['0x1A'];
+        yield 'non-ASCII digits' => ['١٢٣'];
+    }
+
+    #[DataProvider('invalidVariableSymbols')]
+    public function testInvalidVariableSymbolIsRejectedBeforeSigning(string $vs): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('The vs parameter must be up to 10 digits');
+
+        $this->send(['amount' => '1.00', 'vs' => $vs, 'rurl' => 'https://shop.example/return']);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function validVariableSymbols(): iterable
+    {
+        yield 'one digit' => ['1'];
+        yield 'zero' => ['0'];
+        yield '10 digits' => ['9999999999'];
+        yield 'leading zeros' => ['0000000123'];
+    }
+
+    #[DataProvider('validVariableSymbols')]
+    public function testValidVariableSymbol(string $vs): void
+    {
+        $data = $this->send(['amount' => '1.00', 'vs' => $vs, 'rurl' => 'https://shop.example/return'])->getRedirectData();
+
+        self::assertSame($vs, $data['VS']);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function invalidConstantSymbols(): iterable
+    {
+        yield '5 digits' => ['03080'];
+        yield 'letters' => ['abcd'];
+        yield 'inner space' => ['03 8'];
+        yield 'trailing newline' => ["0308\n"];
+        yield 'leading space' => [' 308'];
+        yield 'negative' => ['-308'];
+        yield 'leading letter' => ['x308'];
+        yield 'trailing letter' => ['308x'];
+    }
+
+    #[DataProvider('invalidConstantSymbols')]
+    public function testInvalidConstantSymbolIsRejectedBeforeSigning(string $cs): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('The cs parameter must be up to 4 digits');
+
+        $this->send(['amount' => '1.00', 'vs' => '2024000123', 'cs' => $cs, 'rurl' => 'https://shop.example/return']);
+    }
+
+    /**
+     * @return iterable<string, array{?string}>
+     */
+    public static function validConstantSymbols(): iterable
+    {
+        yield 'not set' => [null];
+        yield 'empty' => [''];
+        yield 'one digit' => ['8'];
+        yield '4 digits' => ['0308'];
+    }
+
+    #[DataProvider('validConstantSymbols')]
+    public function testValidConstantSymbol(?string $cs): void
+    {
+        $data = $this->send(['amount' => '1.00', 'vs' => '2024000123', 'cs' => $cs, 'rurl' => 'https://shop.example/return'])->getRedirectData();
+
+        self::assertSame($cs, $data['CS']);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function invalidReturnUrls(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'relative path' => ['/return'];
+        yield 'no scheme' => ['shop.example/return'];
+        yield 'protocol-relative' => ['//shop.example/return'];
+        yield 'scheme only' => ['https://'];
+        yield 'no host' => ['https:///return'];
+        yield 'opaque' => ['https:shop.example'];
+        yield 'ftp' => ['ftp://shop.example/return'];
+        yield 'javascript' => ['javascript:alert(1)'];
+        yield 'https without slashes' => ['https:/shop.example/return'];
+        yield 'space' => ['https://shop.example/re turn'];
+        yield 'leading space' => [' https://shop.example/return'];
+        yield 'trailing newline' => ["https://shop.example/return\n"];
+        yield 'tab' => ["https://shop.example/\treturn"];
+        yield 'NUL' => ["https://shop.example/\0return"];
+        yield 'DEL' => ["https://shop.example/\x7Freturn"];
+    }
+
+    #[DataProvider('invalidReturnUrls')]
+    public function testInvalidReturnUrlIsRejectedBeforeSigning(string $rurl): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('The rurl parameter must be an absolute https:// URL');
+
+        $this->send(['amount' => '1.00', 'vs' => '2024000123', 'rurl' => $rurl]);
+    }
+
+    #[DataProvider('invalidReturnUrls')]
+    public function testInvalidReturnUrlIsRejectedInTestMode(string $rurl): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('The rurl parameter must be an absolute https:// or http:// URL');
+
+        $this->send(['amount' => '1.00', 'vs' => '2024000123', 'rurl' => $rurl, 'testMode' => true]);
+    }
+
+    public function testPlainHttpReturnUrlIsRejectedInProduction(): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('The rurl parameter must be an absolute https:// URL');
+
+        $this->send(['amount' => '1.00', 'vs' => '2024000123', 'rurl' => 'http://shop.example/return']);
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function validReturnUrls(): iterable
+    {
+        yield 'https' => ['https://shop.example/return', false];
+        yield 'https with query and fragment' => ['https://shop.example:8443/return?order=1&a=b#x', false];
+        yield 'upper-case scheme' => ['HTTPS://shop.example/return', false];
+        yield 'non-ASCII path' => ['https://obchod.example/návrat', false];
+        yield 'https in test mode' => ['https://shop.example/return', true];
+        yield 'http in test mode' => ['http://localhost:8080/return', true];
+        yield 'upper-case http in test mode' => ['HTTP://127.0.0.1/return', true];
+    }
+
+    #[DataProvider('validReturnUrls')]
+    public function testValidReturnUrl(string $rurl, bool $testMode): void
+    {
+        $data = $this->send(['amount' => '1.00', 'vs' => '2024000123', 'rurl' => $rurl, 'testMode' => $testMode])->getRedirectData();
+
+        self::assertSame($rurl, $data['RURL']);
     }
 
     public function testAccessors(): void

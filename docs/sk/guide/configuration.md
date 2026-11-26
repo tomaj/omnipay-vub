@@ -48,15 +48,15 @@ Prázdny `sharedSecret` alebo `sharedSecret` len z bielych znakov (napríklad z 
 | Parameter | Posiela sa ako | Podpísaný | Povinný | Popis |
 |---|---|---|---|---|
 | `amount` | `AMT` | áno | áno | Suma v eurách. Omnipay ju formátuje na dve desatinné miesta: `'10'`, `10` aj `'10.00'` sa pošlú ako `10.00`; viac ako dve desatinné miesta vyhodia `InvalidRequestException('Amount precision is too high for currency.')`, záporná suma `'A negative amount is not allowed.'`. |
-| `vs` | `VS` | áno | áno | Variabilný symbol: identifikuje objednávku, len číslice, najviac 10; **presne 10**, ak je nastavený `ss` (doplňte nulami). Použite hodnotu jedinečnú pre každú objednávku. |
+| `vs` | `VS` | áno | áno | Variabilný symbol: identifikuje objednávku, len číslice, najviac 10 (kontroluje sa); **presne 10**, ak je nastavený `ss` (doplňte nulami). Použite hodnotu jedinečnú pre každú objednávku. |
 | `ss` | `SS` | áno | nie | Špecifický symbol, len číslice, najviac 10 (kontroluje sa). Vyžaduje 10-miestny `vs`. Ak ho pošlete, tú istú hodnotu odovzdajte aj do `completePurchase()`. |
-| `cs` | `CS` | áno | nie | Konštantný symbol, najviac 4 číslice (napríklad `0308`). |
-| `rurl` | `RURL` | áno | áno | Návratová URL: kam banka pošle zákazníka späť s výsledkom. |
+| `cs` | `CS` | áno | nie | Konštantný symbol, len číslice, najviac 4 (kontroluje sa; napríklad `0308`). |
+| `rurl` | `RURL` | áno | áno | Návratová URL: kam banka pošle zákazníka späť s výsledkom. Absolútna `https://` URL (kontroluje sa); `http://` sa prijme len v testovacom režime. |
 | `rem` | `REM` | nie | nie | E-mailová adresa, na ktorú banka pošle notifikáciu o platbe. |
 | `rsms` | `RSMS` | nie | nie | Číslo mobilného telefónu pre SMS notifikáciu od banky. |
 | `mid`, `sharedSecret`, `testMode`, `testHost` | | | | Zdedené z brány, pre jednotlivú požiadavku ich môžete prepísať. |
 
-`purchase()` vyhodí `InvalidRequestException('The vs parameter is required')` (alebo pre `rurl`, `amount`, `mid`, `sharedSecret`), keď je niektorý z nich `null`, a pri prázdnom `sharedSecret` tiež. S nastaveným `ss` vyhodí `The ss parameter must be up to 10 digits` alebo `The vs parameter must be exactly 10 digits when ss is set`. Konštantný alebo špecifický symbol zložený len z núl (`0`, `0000`) VÚB v produkcii odmietne; simulátor ho prijme, takže parameter radšej vynechajte, než aby ste posielali nuly.
+`purchase()` vyhodí `InvalidRequestException('The vs parameter is required')` (alebo pre `rurl`, `amount`, `mid`, `sharedSecret`), keď je niektorý z nich `null`, a pri prázdnom `sharedSecret` tiež. Chybný formát vyhodí výnimku skôr, než sa čokoľvek podpíše: `The vs parameter must be up to 10 digits`, `The cs parameter must be up to 4 digits`, `The rurl parameter must be an absolute https:// URL` (v testovacom režime `... https:// or http:// URL`) a s nastaveným `ss` `The ss parameter must be up to 10 digits` alebo `The vs parameter must be exactly 10 digits when ss is set`. Konštantný alebo špecifický symbol zložený len z núl (`0`, `0000`) VÚB v produkcii odmietne; simulátor ho prijme, takže parameter radšej vynechajte, než aby ste posielali nuly.
 
 Mena nie je parameter: e-platby platia v eurách. Všeobecné parametre požiadavky v Omnipay (`currency`, `description`, `transactionId`, `returnUrl`, ...) brána prijme, ale banke ich neposiela; na návratovú URL použite `rurl`.
 

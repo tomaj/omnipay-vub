@@ -15,10 +15,22 @@ Output (the [Payment form example](../examples/purchase-form)):
 | Exception | When |
 |---|---|
 | `InvalidRequestException('The sharedSecret parameter is required')`, `... mid ...`, `... vs ...`, `... rurl ...`, `... amount ...` | the parameter is `null` (not set and no gateway default); for `sharedSecret` also an empty or whitespace-only value, including the gateway's default `''` |
+| `InvalidRequestException('The vs parameter must be up to 10 digits')` | `vs` is not 1 to 10 digits (`0`-`9` only, no spaces or signs) |
+| `InvalidRequestException('The cs parameter must be up to 4 digits')` | `cs` is set (not `null` or `''`) but is not 1 to 4 digits |
 | `InvalidRequestException('The ss parameter must be up to 10 digits')` | `ss` is set but is not 1 to 10 digits |
 | `InvalidRequestException('The vs parameter must be exactly 10 digits when ss is set')` | `ss` is set and `vs` is not exactly 10 digits ([Choosing the variable symbol](#choosing-the-variable-symbol)) |
+| `InvalidRequestException('The rurl parameter must be an absolute https:// URL')` | `rurl` is not an absolute `https://` URL with a host (relative, another scheme, or containing whitespace or control characters); in test mode `http://` is accepted too and the message is `... must be an absolute https:// or http:// URL` |
 | `InvalidRequestException('Amount precision is too high for currency.')` | `amount` has more than two decimals |
 | `InvalidRequestException('A negative amount is not allowed.')` | `amount` is negative |
+
+All of them are thrown by `getData()`, before anything is signed, so a malformed payment never reaches the bank's error page. Accepted formats:
+
+| Parameter | Format |
+|---|---|
+| `vs` | 1 to 10 digits; exactly 10 when `ss` is set |
+| `ss` | optional; 1 to 10 digits |
+| `cs` | optional; 1 to 4 digits |
+| `rurl` | absolute `https://` URL with a host, no whitespace or control characters; `http://` only in test mode |
 
 `getData()` returns the fields without the signature, in this order: `MID`, `AMT`, `VS`, `CS`, `RURL`, `SS`, `REM`, `RSMS` (`null` for an empty optional field). `sendData($data)` adds `SIGN`.
 

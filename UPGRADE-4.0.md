@@ -68,6 +68,32 @@ $gateway->setSharedSecret((string) getenv('VUB_SHARED_SECRET'));
 $gateway->setSharedSecret(getenv('VUB_SHARED_SECRET') ?: throw new RuntimeException('VUB_SHARED_SECRET is not set'));
 ```
 
+## Payment symbols and the return URL are validated
+
+3.x signed and posted any `vs` and `cs` without a specific symbol, and any `rurl`; VÚB rejected a malformed one only after the customer was redirected, on the bank's error page. 4.0 checks them in `purchase()` (`getData()`, `send()`) before anything is signed and throws `InvalidRequestException`:
+
+| Parameter | Accepted | Message |
+|---|---|---|
+| `vs` | 1 to 10 digits | `The vs parameter must be up to 10 digits` |
+| `cs` | not set, `''`, or 1 to 4 digits | `The cs parameter must be up to 4 digits` |
+| `rurl` | absolute `https://` URL with a host, no whitespace or control characters; `http://` too in test mode | `The rurl parameter must be an absolute https:// URL` (`... https:// or http:// URL` in test mode) |
+
+<!-- snippet: skip -->
+```php
+// 3.x: signed and posted; VÚB showed an error page after the redirect
+$gateway->purchase(['vs' => 'ORD-123', 'cs' => '00308', 'amount' => '10.00', 'rurl' => '/payment/return'])->send();
+
+// 4.0: throws InvalidRequestException('The vs parameter must be up to 10 digits') before signing
+$gateway->purchase([
+    'vs' => '2024000123',                         // 1 to 10 digits
+    'cs' => '0308',                               // optional, 1 to 4 digits
+    'amount' => '10.00',
+    'rurl' => 'https://shop.example/payment/return', // absolute https:// (http:// only in test mode)
+])->send();
+```
+
+A plain `http://` return URL works only with `testMode` on, for a shop running locally. Validate order IDs before you use them as `vs`, and build `rurl` from your site's absolute HTTPS base URL.
+
 ## PHP 8.4 and omnipay/common 3.2
 
 `composer.json` requires `"php": "^8.4"` and `"omnipay/common": "^3.2"`. Upgrade PHP first, then:
