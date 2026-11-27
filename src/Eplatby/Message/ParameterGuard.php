@@ -19,7 +19,7 @@ final readonly class ParameterGuard
      *
      * @throws InvalidRequestException
      */
-    public static function sharedSecret(?string $sharedSecret): string
+    public static function sharedSecret(#[\SensitiveParameter] ?string $sharedSecret): string
     {
         if ($sharedSecret === null || trim($sharedSecret) === '') {
             throw new InvalidRequestException('The sharedSecret parameter is required');

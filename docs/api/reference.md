@@ -99,7 +99,7 @@ The getters return `null` when the data has no string under that key (only possi
 
 | Method | Returns | Description |
 |---|---|---|
-| `sign(string $input, string $secret)` | `string` | `strtoupper(hash_hmac('sha256', $input, $secret))` |
+| `sign(string $input, #[\SensitiveParameter] string $secret)` | `string` | `strtoupper(hash_hmac('sha256', $input, $secret))` |
 
 ## Exceptions
 
