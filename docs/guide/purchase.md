@@ -17,6 +17,7 @@ Output (the [Payment form example](../examples/purchase-form)):
 | `InvalidRequestException('The sharedSecret parameter is required')`, `... mid ...`, `... vs ...`, `... rurl ...`, `... amount ...` | the parameter is `null` (not set and no gateway default); for `sharedSecret` also an empty or whitespace-only value, including the gateway's default `''` |
 | `InvalidRequestException('The vs parameter must be up to 10 digits')` | `vs` is not 1 to 10 digits (`0`-`9` only, no spaces or signs) |
 | `InvalidRequestException('The cs parameter must be up to 4 digits')` | `cs` is set (not `null` or `''`) but is not 1 to 4 digits |
+| `InvalidRequestException('The vs parameter must be exactly 10 digits when cs is set')` | `cs` is set and `vs` is not exactly 10 digits ([Choosing the variable symbol](#choosing-the-variable-symbol)) |
 | `InvalidRequestException('The ss parameter must be up to 10 digits')` | `ss` is set but is not 1 to 10 digits |
 | `InvalidRequestException('The vs parameter must be exactly 10 digits when ss is set')` | `ss` is set and `vs` is not exactly 10 digits ([Choosing the variable symbol](#choosing-the-variable-symbol)) |
 | `InvalidRequestException('The rurl parameter must be an absolute https:// URL')` | `rurl` is not an absolute `https://` URL with a host (relative, another scheme, or containing whitespace or control characters); in test mode `http://` is accepted too and the message is `... must be an absolute https:// or http:// URL` |
@@ -27,7 +28,7 @@ All of them are thrown by `getData()`, before anything is signed, so a malformed
 
 | Parameter | Format |
 |---|---|
-| `vs` | 1 to 10 digits; exactly 10 when `ss` is set |
+| `vs` | 1 to 10 digits; exactly 10 when `ss` or `cs` is set |
 | `ss` | optional; 1 to 10 digits |
 | `cs` | optional; 1 to 4 digits |
 | `rurl` | absolute `https://` URL with a host, no whitespace or control characters; `http://` only in test mode |
@@ -76,7 +77,7 @@ The variable symbol is how the return finds its order, and the bank's signature 
 
 - **unique per order** (and per payment attempt, if your accounting needs that), never reused;
 - **digits only, up to 10**, as the bank requires;
-- **exactly 10 digits** if you also use specific symbols, for example the order ID padded with zeros: `str_pad((string) $id, 10, '0', STR_PAD_LEFT)`. The bank signs `VS + SS` without a separator; with a full-length variable symbol a signed `VS + SS` can only be split one way. `purchase()` and `completePurchase()` throw `InvalidRequestException('The vs parameter must be exactly 10 digits when ss is set')` otherwise ([Security](./security#variable-and-specific-symbol)). Without a specific symbol any length up to 10 works, but a fixed length is still the safer choice.
+- **exactly 10 digits** if you also use specific or constant symbols, for example the order ID padded with zeros: `str_pad((string) $id, 10, '0', STR_PAD_LEFT)`. The bank signs `VS + SS` without a separator; with a full-length variable symbol a signed `VS + SS` can only be split one way. `purchase()` and `completePurchase()` throw `InvalidRequestException('The vs parameter must be exactly 10 digits when ss is set')` otherwise ([Security](./security#variable-and-specific-symbol)). The payment request signs `VS + SS + CS` without a separator too, so with a constant symbol `purchase()` throws `InvalidRequestException('The vs parameter must be exactly 10 digits when cs is set')`. Without specific and constant symbols any length up to 10 works, but a fixed length is still the safer choice.
 
 ## Signing a string yourself
 

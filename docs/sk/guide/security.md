@@ -34,6 +34,8 @@ Banka podpisuje `VS + SS + RES` bez oddeľovača, takže `VS=12345` so `SS=6` po
 - `completePurchase()` porovná oba symboly so symbolmi vašej objednávky (`ss` rovné `null` znamená „žiadny `SS`“), takže návrat, v ktorom sa číslice presunuli medzi `VS` a `SS`, túto objednávku nedokončí;
 - so špecifickým symbolom vyžadujú `purchase()` aj `completePurchase()` variabilný symbol s presne 10 číslicami, čo je maximum, ktoré VÚB povoľuje. Podpísaný `VS + SS` takejto objednávky sa dá rozdeliť len jedným spôsobom a nemôže sa rovnať `VS` objednávky bez špecifického symbolu (ten má najviac 10 číslic). ID objednávky doplňte nulami: `str_pad((string) $id, 10, '0', STR_PAD_LEFT)`.
 
+Platobná požiadavka podpisuje `MID + AMT + VS + SS + CS + RURL` tiež bez oddeľovačov, takže konštantný symbol má rovnaký problém na ceste do banky: `VS=1234` s `CS=0308` podpíše tie isté číslice ako `VS=12340308` bez `CS`. S konštantným symbolom preto `purchase()` tiež vyžaduje variabilný symbol s presne 10 číslicami; podpísaný `VS + SS + CS` takejto objednávky sa dá rozdeliť len tak, že `VS` zostane rovnaký.
+
 Bez špecifických symbolov sa nič nemení: každá objednávka očakáva prázdny `SS`, takže návrat so `SS` sa odmietne. Variabilné symboly jednej pevnej dĺžky (10 číslic) aj tak odporúčame pre všetky objednávky.
 
 ## Testovací režim {#test-mode}

@@ -80,6 +80,7 @@ Verzia 3.x podpísala a odoslala akýkoľvek `vs` a `cs` bez špecifického symb
 |---|---|---|
 | `vs` | 1 až 10 číslic | `The vs parameter must be up to 10 digits` |
 | `cs` | nenastavený, `''` alebo 1 až 4 číslice | `The cs parameter must be up to 4 digits` |
+| `vs` s nastaveným `cs` | presne 10 číslic (ID objednávky doplňte nulami, ako pri `ss`) | `The vs parameter must be exactly 10 digits when cs is set` |
 | `rurl` | absolútna `https://` URL s hostiteľom, bez medzier a riadiacich znakov; v testovacom režime aj `http://` | `The rurl parameter must be an absolute https:// URL` (v testovacom režime `... https:// or http:// URL`) |
 
 <!-- snippet: skip -->
@@ -89,7 +90,7 @@ $gateway->purchase(['vs' => 'ORD-123', 'cs' => '00308', 'amount' => '10.00', 'ru
 
 // 4.0: throws InvalidRequestException('The vs parameter must be up to 10 digits') before signing
 $gateway->purchase([
-    'vs' => '2024000123',                         // 1 to 10 digits
+    'vs' => '2024000123',                         // 1 to 10 digits; exactly 10 with cs or ss
     'cs' => '0308',                               // optional, 1 to 4 digits
     'amount' => '10.00',
     'rurl' => 'https://shop.example/payment/return', // absolute https:// (http:// only in test mode)

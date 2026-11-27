@@ -89,15 +89,15 @@ final class PurchaseRequestTest extends TestCase
         foreach ([null, ''] as $ss) {
             $data = $this->send([
                 'amount' => '10.00',
-                'vs' => '123456',
+                'vs' => '0000123456',
                 'cs' => '0321',
                 'ss' => $ss,
                 'rurl' => 'http://localhost:4444/testserver.php',
                 'testMode' => true, // plain http is accepted in test mode only
             ])->getRedirectData();
 
-            // HMAC-SHA256 of "11111111" . "10.00" . "123456" . "0321" . rurl, verified with the openssl CLI
-            self::assertSame('E227E97C520A502C45B77AEF4ABE5252A3F3065DB96C471C36FAD186FA50E62E', $data['SIGN']);
+            // HMAC-SHA256 of "11111111" . "10.00" . "0000123456" . "0321" . rurl, verified with the openssl CLI
+            self::assertSame('352B04E313B7B696D0119B753BB109D9972AD14CE3F77CD1AE37B659DBBC7451', $data['SIGN']);
         }
     }
 
@@ -119,14 +119,14 @@ final class PurchaseRequestTest extends TestCase
         $data = $this->send([
             'amount' => 10,
             'vs' => 123456,
-            'cs' => '0321',
             'rurl' => 'http://localhost:4444/testserver.php',
             'testMode' => true, // plain http is accepted in test mode only
         ])->getRedirectData();
 
         self::assertSame('123456', $data['VS']);
         self::assertSame('10.00', $data['AMT']);
-        self::assertSame('E227E97C520A502C45B77AEF4ABE5252A3F3065DB96C471C36FAD186FA50E62E', $data['SIGN']);
+        // HMAC-SHA256 of "11111111" . "10.00" . "123456" . rurl, verified with the openssl CLI
+        self::assertSame('C3D677608AF2E2AEE458937B9BDB38D5B9985B969CA22FE6E4E7BE7F504002BB', $data['SIGN']);
     }
 
     public function testProductionEndpoint(): void
@@ -362,6 +362,36 @@ final class PurchaseRequestTest extends TestCase
         $data = $this->send(['amount' => '1.00', 'vs' => '2024000123', 'cs' => $cs, 'rurl' => 'https://shop.example/return'])->getRedirectData();
 
         self::assertSame($cs, $data['CS']);
+    }
+
+    /**
+     * @return iterable<string, array{string, ?string}>
+     */
+    public static function shortVariableSymbolsWithConstantSymbol(): iterable
+    {
+        yield 'short vs' => ['123456', null];
+        yield '9 digit vs' => ['000123456', null];
+        yield 'short vs with ss' => ['123456', '77'];
+    }
+
+    /**
+     * The request signs VS + SS + CS without a separator, so with a constant symbol the variable symbol has a fixed length.
+     */
+    #[DataProvider('shortVariableSymbolsWithConstantSymbol')]
+    public function testConstantSymbolRequiresTenDigitVariableSymbol(string $vs, ?string $ss): void
+    {
+        $this->expectException(InvalidRequestException::class);
+        $this->expectExceptionMessageIs('The vs parameter must be exactly 10 digits when cs is set');
+
+        $this->send(['amount' => '1.00', 'vs' => $vs, 'ss' => $ss, 'cs' => '0308', 'rurl' => 'https://shop.example/return']);
+    }
+
+    public function testVariableSymbolOfAnyLengthWithoutConstantSymbol(): void
+    {
+        foreach ([null, ''] as $cs) {
+            $data = $this->send(['amount' => '1.00', 'vs' => '123456', 'cs' => $cs, 'rurl' => 'https://shop.example/return'])->getRedirectData();
+            self::assertSame('123456', $data['VS']);
+        }
     }
 
     /**

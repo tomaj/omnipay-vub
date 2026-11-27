@@ -76,6 +76,7 @@ $gateway->setSharedSecret(getenv('VUB_SHARED_SECRET') ?: throw new RuntimeExcept
 |---|---|---|
 | `vs` | 1 to 10 digits | `The vs parameter must be up to 10 digits` |
 | `cs` | not set, `''`, or 1 to 4 digits | `The cs parameter must be up to 4 digits` |
+| `vs` with `cs` set | exactly 10 digits (pad the order ID with zeros, as with `ss`) | `The vs parameter must be exactly 10 digits when cs is set` |
 | `rurl` | absolute `https://` URL with a host, no whitespace or control characters; `http://` too in test mode | `The rurl parameter must be an absolute https:// URL` (`... https:// or http:// URL` in test mode) |
 
 <!-- snippet: skip -->
@@ -85,7 +86,7 @@ $gateway->purchase(['vs' => 'ORD-123', 'cs' => '00308', 'amount' => '10.00', 'ru
 
 // 4.0: throws InvalidRequestException('The vs parameter must be up to 10 digits') before signing
 $gateway->purchase([
-    'vs' => '2024000123',                         // 1 to 10 digits
+    'vs' => '2024000123',                         // 1 to 10 digits; exactly 10 with cs or ss
     'cs' => '0308',                               // optional, 1 to 4 digits
     'amount' => '10.00',
     'rurl' => 'https://shop.example/payment/return', // absolute https:// (http:// only in test mode)

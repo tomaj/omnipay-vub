@@ -61,6 +61,22 @@ final readonly class ParameterGuard
     }
 
     /**
+     * The payment request signs VS, SS and CS concatenated without a separator. With a constant symbol, the
+     * variable symbol must have the full length of 10 digits, so that the signed digits can only be split one way.
+     *
+     * @throws InvalidRequestException
+     */
+    public static function variableSymbolWithConstantSymbol(string $vs, ?string $cs): void
+    {
+        if ($cs === null || $cs === '') {
+            return;
+        }
+        if (preg_match('/\A[0-9]{10}\z/', $vs) !== 1) {
+            throw new InvalidRequestException('The vs parameter must be exactly 10 digits when cs is set');
+        }
+    }
+
+    /**
      * The return URL must be absolute, so the bank can send the customer back, and use HTTPS
      * (plain HTTP only in test mode, for a shop running locally).
      *

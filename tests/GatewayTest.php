@@ -41,17 +41,17 @@ final class GatewayTest extends TestCase
 
         $request = $this->gateway->purchase([
             'amount' => '10.00',
-            'VS' => '123456',
+            'VS' => '0000123456',
             'CS' => '0321',
             'rurl' => 'http://localhost:4444/testserver.php',
         ]);
         self::assertSame('11111111', $request->getMid());
-        self::assertSame('123456', $request->getVs());
+        self::assertSame('0000123456', $request->getVs());
 
         $response = $request->send();
         self::assertSame('https://custom.example/payment/eplatby-hmac', $response->getRedirectUrl());
         self::assertSame(
-            'E227E97C520A502C45B77AEF4ABE5252A3F3065DB96C471C36FAD186FA50E62E',
+            '352B04E313B7B696D0119B753BB109D9972AD14CE3F77CD1AE37B659DBBC7451',
             $response->getRedirectData()['SIGN'],
         );
     }
