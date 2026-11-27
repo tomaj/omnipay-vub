@@ -34,6 +34,8 @@ The bank signs `VS + SS + RES` without a separator, so `VS=12345` with `SS=6` si
 - `completePurchase()` compares both symbols with the ones of your order (`ss` `null` means "no `SS`"), so a return whose digits were moved between `VS` and `SS` does not complete that order;
 - with a specific symbol, `purchase()` and `completePurchase()` require a variable symbol of exactly 10 digits, the maximum VÚB allows. A signed `VS + SS` of such an order can only be split one way, and it cannot equal the `VS` of an order without a specific symbol (at most 10 digits). Pad the order ID: `str_pad((string) $id, 10, '0', STR_PAD_LEFT)`.
 
+The payment request signs `MID + AMT + VS + SS + CS + RURL`, also without separators, so a constant symbol has the same problem on the way to the bank: `VS=1234` with `CS=0308` signs the same digits as `VS=12340308` without `CS`. With a constant symbol, `purchase()` therefore requires a variable symbol of exactly 10 digits as well; the signed `VS + SS + CS` of such an order can only be split so that `VS` stays the same.
+
 Without specific symbols, nothing changes: every order expects an empty `SS`, so a return with one is rejected. Variable symbols of one fixed length (10 digits) are still recommended for every order.
 
 ## Test mode

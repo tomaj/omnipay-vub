@@ -48,15 +48,15 @@ An empty or whitespace-only `sharedSecret` (for example from a missing environme
 | Parameter | Sent as | Signed | Required | Description |
 |---|---|---|---|---|
 | `amount` | `AMT` | yes | yes | Amount in euro. Omnipay formats it with two decimals: `'10'`, `10` and `'10.00'` are all sent as `10.00`; more than two decimals throws `InvalidRequestException('Amount precision is too high for currency.')`, a negative amount `'A negative amount is not allowed.'`. |
-| `vs` | `VS` | yes | yes | Variable symbol: identifies the order, digits only, up to 10; **exactly 10** when `ss` is set (pad with zeros). Use a value unique per order. |
+| `vs` | `VS` | yes | yes | Variable symbol: identifies the order, digits only, up to 10 (checked); **exactly 10** when `ss` is set (pad with zeros). Use a value unique per order. |
 | `ss` | `SS` | yes | no | Specific symbol, digits only, up to 10 (checked). Requires a 10-digit `vs`. If you send one, pass the same value to `completePurchase()`. |
-| `cs` | `CS` | yes | no | Constant symbol, up to 4 digits (for example `0308`). |
-| `rurl` | `RURL` | yes | yes | Return URL: where the bank sends the customer back with the result. |
+| `cs` | `CS` | yes | no | Constant symbol, digits only, up to 4 (checked; for example `0308`). |
+| `rurl` | `RURL` | yes | yes | Return URL: where the bank sends the customer back with the result. An absolute `https://` URL (checked); `http://` is accepted in test mode only. |
 | `rem` | `REM` | no | no | E-mail address for a payment notification from the bank. |
 | `rsms` | `RSMS` | no | no | Mobile phone number for an SMS notification from the bank. |
 | `mid`, `sharedSecret`, `testMode`, `testHost` | | | | Inherited from the gateway, can be overridden per request. |
 
-`purchase()` throws `InvalidRequestException('The vs parameter is required')` (or `rurl`, `amount`, `mid`, `sharedSecret`) when one of them is `null`, and for an empty `sharedSecret` too. With `ss` set it throws `The ss parameter must be up to 10 digits` or `The vs parameter must be exactly 10 digits when ss is set`. VÚB rejects a constant or specific symbol made only of zeros (`0`, `0000`) in production; the simulator accepts it, so leave the parameter out instead of sending zeros.
+`purchase()` throws `InvalidRequestException('The vs parameter is required')` (or `rurl`, `amount`, `mid`, `sharedSecret`) when one of them is `null`, and for an empty `sharedSecret` too. A malformed value throws before anything is signed: `The vs parameter must be up to 10 digits`, `The cs parameter must be up to 4 digits` (with `cs` set also `The vs parameter must be exactly 10 digits when cs is set`), `The rurl parameter must be an absolute https:// URL` (`... https:// or http:// URL` in test mode), and with `ss` set `The ss parameter must be up to 10 digits` or `The vs parameter must be exactly 10 digits when ss is set`. VÚB rejects a constant or specific symbol made only of zeros (`0`, `0000`) in production; the simulator accepts it, so leave the parameter out instead of sending zeros.
 
 The currency is not a parameter: e-platby pays in euro. Omnipay's generic request parameters (`currency`, `description`, `transactionId`, `returnUrl`, ...) are accepted but not sent to the bank; use `rurl` for the return URL.
 

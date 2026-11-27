@@ -72,6 +72,33 @@ $gateway->setSharedSecret((string) getenv('VUB_SHARED_SECRET'));
 $gateway->setSharedSecret(getenv('VUB_SHARED_SECRET') ?: throw new RuntimeException('VUB_SHARED_SECRET is not set'));
 ```
 
+## Platobné symboly a návratová URL sa kontrolujú {#payment-symbols-and-the-return-url-are-validated}
+
+Verzia 3.x podpísala a odoslala akýkoľvek `vs` a `cs` bez špecifického symbolu a akúkoľvek `rurl`; chybnú hodnotu VÚB odmietla až po presmerovaní zákazníka, na chybovej stránke banky. Verzia 4.0 ich skontroluje v `purchase()` (`getData()`, `send()`) skôr, než sa čokoľvek podpíše, a vyhodí `InvalidRequestException`:
+
+| Parameter | Prijme sa | Správa |
+|---|---|---|
+| `vs` | 1 až 10 číslic | `The vs parameter must be up to 10 digits` |
+| `cs` | nenastavený, `''` alebo 1 až 4 číslice | `The cs parameter must be up to 4 digits` |
+| `vs` s nastaveným `cs` | presne 10 číslic (ID objednávky doplňte nulami, ako pri `ss`) | `The vs parameter must be exactly 10 digits when cs is set` |
+| `rurl` | absolútna `https://` URL s hostiteľom, bez medzier a riadiacich znakov; v testovacom režime aj `http://` | `The rurl parameter must be an absolute https:// URL` (v testovacom režime `... https:// or http:// URL`) |
+
+<!-- snippet: skip -->
+```php
+// 3.x: signed and posted; VÚB showed an error page after the redirect
+$gateway->purchase(['vs' => 'ORD-123', 'cs' => '00308', 'amount' => '10.00', 'rurl' => '/payment/return'])->send();
+
+// 4.0: throws InvalidRequestException('The vs parameter must be up to 10 digits') before signing
+$gateway->purchase([
+    'vs' => '2024000123',                         // 1 to 10 digits; exactly 10 with cs or ss
+    'cs' => '0308',                               // optional, 1 to 4 digits
+    'amount' => '10.00',
+    'rurl' => 'https://shop.example/payment/return', // absolute https:// (http:// only in test mode)
+])->send();
+```
+
+Obyčajná `http://` návratová URL funguje len so zapnutým `testMode`, pre e-shop bežiaci lokálne. ID objednávok skontrolujte skôr, než ich použijete ako `vs`, a `rurl` skladajte z absolútnej HTTPS adresy vášho webu.
+
 ## PHP 8.4 a omnipay/common 3.2 {#php-8-4-and-omnipay-common-3-2}
 
 `composer.json` vyžaduje `"php": "^8.4"` a `"omnipay/common": "^3.2"`. Najprv aktualizujte PHP, potom:

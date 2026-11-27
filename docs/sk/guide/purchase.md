@@ -15,10 +15,23 @@ Výstup ([príklad Platobný formulár](../examples/purchase-form)):
 | Výnimka | Kedy |
 |---|---|
 | `InvalidRequestException('The sharedSecret parameter is required')`, `... mid ...`, `... vs ...`, `... rurl ...`, `... amount ...` | parameter je `null` (nie je nastavený a brána nemá predvolenú hodnotu); pri `sharedSecret` aj prázdna hodnota alebo hodnota len z bielych znakov, vrátane predvoleného `''` brány |
+| `InvalidRequestException('The vs parameter must be up to 10 digits')` | `vs` nemá 1 až 10 číslic (len `0` – `9`, bez medzier a znamienok) |
+| `InvalidRequestException('The cs parameter must be up to 4 digits')` | `cs` je nastavený (nie `null` ani `''`), ale nemá 1 až 4 číslice |
+| `InvalidRequestException('The vs parameter must be exactly 10 digits when cs is set')` | `cs` je nastavený a `vs` nemá presne 10 číslic ([Výber variabilného symbolu](#choosing-the-variable-symbol)) |
 | `InvalidRequestException('The ss parameter must be up to 10 digits')` | `ss` je nastavený, ale nemá 1 až 10 číslic |
 | `InvalidRequestException('The vs parameter must be exactly 10 digits when ss is set')` | `ss` je nastavený a `vs` nemá presne 10 číslic ([Výber variabilného symbolu](#choosing-the-variable-symbol)) |
+| `InvalidRequestException('The rurl parameter must be an absolute https:// URL')` | `rurl` nie je absolútna `https://` URL s hostiteľom (je relatívna, má inú schému alebo obsahuje medzery či riadiace znaky); v testovacom režime sa prijme aj `http://` a správa znie `... must be an absolute https:// or http:// URL` |
 | `InvalidRequestException('Amount precision is too high for currency.')` | `amount` má viac ako dve desatinné miesta |
 | `InvalidRequestException('A negative amount is not allowed.')` | `amount` je záporná |
+
+Všetky vyhodí už `getData()`, skôr než sa čokoľvek podpíše, takže chybne zadaná platba sa nikdy nedostane na chybovú stránku banky. Prijímané formáty:
+
+| Parameter | Formát |
+|---|---|
+| `vs` | 1 až 10 číslic; presne 10, ak je nastavený `ss` alebo `cs` |
+| `ss` | nepovinný; 1 až 10 číslic |
+| `cs` | nepovinný; 1 až 4 číslice |
+| `rurl` | absolútna `https://` URL s hostiteľom, bez medzier a riadiacich znakov; `http://` len v testovacom režime |
 
 `getData()` vráti polia bez podpisu v tomto poradí: `MID`, `AMT`, `VS`, `CS`, `RURL`, `SS`, `REM`, `RSMS` (`null` pre prázdne nepovinné pole). `sendData($data)` pridá `SIGN`.
 
@@ -64,7 +77,7 @@ Podľa variabilného symbolu návrat nájde svoju objednávku a podpis banky k n
 
 - **jedinečný pre každú objednávku** (a pre každý pokus o platbu, ak to vyžaduje vaše účtovníctvo), nikdy sa neopakuje;
 - **len z číslic, najviac 10**, ako vyžaduje banka;
-- **presne 10-miestny**, ak používate aj špecifické symboly, napríklad ID objednávky doplnené nulami: `str_pad((string) $id, 10, '0', STR_PAD_LEFT)`. Banka podpisuje `VS + SS` bez oddeľovača; pri variabilnom symbole plnej dĺžky sa dá podpísaný `VS + SS` rozdeliť len jedným spôsobom. Inak `purchase()` aj `completePurchase()` vyhodia `InvalidRequestException('The vs parameter must be exactly 10 digits when ss is set')` ([Bezpečnosť](./security#variable-and-specific-symbol)). Bez špecifického symbolu funguje ľubovoľná dĺžka do 10 číslic, pevná dĺžka je však aj tak bezpečnejšia voľba.
+- **presne 10-miestny**, ak používate aj špecifické alebo konštantné symboly, napríklad ID objednávky doplnené nulami: `str_pad((string) $id, 10, '0', STR_PAD_LEFT)`. Banka podpisuje `VS + SS` bez oddeľovača; pri variabilnom symbole plnej dĺžky sa dá podpísaný `VS + SS` rozdeliť len jedným spôsobom. Inak `purchase()` aj `completePurchase()` vyhodia `InvalidRequestException('The vs parameter must be exactly 10 digits when ss is set')` ([Bezpečnosť](./security#variable-and-specific-symbol)). Platobná požiadavka podpisuje bez oddeľovača aj `VS + SS + CS`, takže s konštantným symbolom `purchase()` vyhodí `InvalidRequestException('The vs parameter must be exactly 10 digits when cs is set')`. Bez špecifického a konštantného symbolu funguje ľubovoľná dĺžka do 10 číslic, pevná dĺžka je však aj tak bezpečnejšia voľba.
 
 ## Vlastné podpísanie reťazca {#signing-a-string-yourself}
 
